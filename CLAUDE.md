@@ -133,6 +133,11 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 6. Do NOT change the SDK or API key chain.
 7. Model names live in `constants.ts`.
 
+### Agent Teams
+Agent teams are enabled. For complex parallel work (e.g., frontend + backend + tests simultaneously,
+or parallel code review), Claude can spawn teammate agents that work independently and communicate.
+Use in-process mode (Shift+Up/Down to navigate). Best for tasks where parallel exploration adds value.
+
 ### Grounding Fallback Pattern
 `responseMimeType: "application/json"` conflicts with `tools: [{ googleSearch: {} }]`.
 Both judges try grounding first, catch errors, fall back to JSON mode. Use `safeParseJson()` for responses that may be markdown-fenced.
