@@ -1,0 +1,5 @@
+{
+  "name": "Event Pragmetizer",
+  "description": "An AI-powered event planning system that transforms unstructured user needs into feasible, personalized event plans using a two-phase LLM pipeline.",
+  "requestFramePermissions": []
+}
