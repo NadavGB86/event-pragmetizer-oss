@@ -118,7 +118,8 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 - `hooks/` -> State logic.
 - `utils/` -> Pure functions (no side effects).
 - `components/` -> One component per file.
-- `docs/` -> Documentation.
+- `docs/` -> Active documentation (tradeoffs, OSS roadmap, walkthrough).
+- `docs/archive/` -> Legacy docs from pre-fork history. Reference only.
 
 ---
 
