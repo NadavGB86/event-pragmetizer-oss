@@ -147,8 +147,11 @@ Both judges try grounding first, catch errors, fall back to JSON mode. Use `safe
 ## Origin
 
 This project was created on 2026-02-10 from Event Pragmetizer M3.0 (`v3.0-legacy`).
-It is an independent project with its own git history. The legacy version remains
-frozen at `.gemini/antigravity/scratch/event-pragmetizer/`.
+It is an independent project with its own git history.
+
+Sibling projects:
+- **Event Pragmetizer** (learning lab, private): `.gemini/antigravity/scratch/event-pragmetizer/`
+- **Pragma Lab** (frozen legacy archive): `.gemini/antigravity/scratch/pragma-lab/`
 
 ---
 

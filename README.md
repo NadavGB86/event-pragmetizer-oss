@@ -104,4 +104,4 @@ MIT
 
 ## Origin
 
-This project originated from the Event Pragmetizer MVP (M3.0). See the legacy version at [event-pragmetizer](https://github.com/NadavGB86/event-pragmetizer) (archived).
+This project originated from the Event Pragmetizer MVP (M3.0), an AI-powered event planning prototype that reached three milestones of development before being forked into this open-source version.
