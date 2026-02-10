@@ -19,7 +19,7 @@ import LoginModal from './components/auth/LoginModal';
 import CloudLoadModal from './components/persistence/CloudLoadModal';
 import { exportState, validateAndParseState } from './utils/persistence';
 import ErrorBoundary from './components/ErrorBoundary';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, KeyRound, ExternalLink } from 'lucide-react';
 
 const App: React.FC = () => {
   // --- State ---
@@ -284,6 +284,46 @@ const App: React.FC = () => {
   };
 
   // --- Render Logic ---
+
+  // API key check — show setup screen if Gemini API key is not configured
+  if (!process.env.API_KEY || process.env.API_KEY === 'undefined') {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 p-6">
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 max-w-md w-full">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2.5 bg-amber-100 rounded-xl">
+              <KeyRound className="text-amber-600" size={24} />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-slate-800">Welcome to Event Pragmetizer</h1>
+              <p className="text-sm text-slate-500">API key required to get started</p>
+            </div>
+          </div>
+          <div className="space-y-4 text-sm text-slate-600">
+            <p>This app uses the Google Gemini API to power its AI features. To get started:</p>
+            <ol className="list-decimal list-inside space-y-2 pl-1">
+              <li>
+                <a
+                  href="https://aistudio.google.com/apikey"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-indigo-600 hover:text-indigo-800 underline inline-flex items-center gap-1"
+                >
+                  Get a free Gemini API key <ExternalLink size={12} />
+                </a>
+              </li>
+              <li>Copy <code className="bg-slate-100 px-1.5 py-0.5 rounded text-xs font-mono">.env.example</code> to <code className="bg-slate-100 px-1.5 py-0.5 rounded text-xs font-mono">.env.local</code></li>
+              <li>Add your key: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-xs font-mono">GEMINI_API_KEY=your_key</code></li>
+              <li>Restart the dev server</li>
+            </ol>
+          </div>
+          <div className="mt-6 p-3 bg-slate-50 rounded-lg border border-slate-200">
+            <p className="text-xs text-slate-500 font-mono">cp .env.example .env.local</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <ErrorBoundary>

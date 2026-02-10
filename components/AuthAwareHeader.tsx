@@ -33,7 +33,7 @@ const AuthAwareHeader: React.FC<AuthAwareHeaderProps> = ({
   onCloudLoad,
   onLogin,
 }) => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, cloudAvailable } = useAuth();
 
   return (
     <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0 z-20">
@@ -74,8 +74,8 @@ const AuthAwareHeader: React.FC<AuthAwareHeaderProps> = ({
           </button>
         </div>
 
-        {/* Cloud Actions (auth required) */}
-        {user && (
+        {/* Cloud Actions (auth required + Supabase configured) */}
+        {cloudAvailable && user && (
           <div className="flex items-center gap-1 border-l pl-4 border-slate-200">
             <button
               onClick={onCloudSave}
@@ -107,31 +107,33 @@ const AuthAwareHeader: React.FC<AuthAwareHeaderProps> = ({
           </button>
         </div>
 
-        {/* Auth Status */}
-        <div className="flex items-center gap-2 border-l pl-4 border-slate-200">
-          {user ? (
-            <>
-              <span className="text-xs text-slate-500 hidden lg:inline max-w-[140px] truncate">
-                {user.email}
-              </span>
+        {/* Auth Status (only when Supabase is configured) */}
+        {cloudAvailable && (
+          <div className="flex items-center gap-2 border-l pl-4 border-slate-200">
+            {user ? (
+              <>
+                <span className="text-xs text-slate-500 hidden lg:inline max-w-[140px] truncate">
+                  {user.email}
+                </span>
+                <button
+                  onClick={signOut}
+                  className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                  title="Sign Out"
+                >
+                  <LogOut size={18} />
+                </button>
+              </>
+            ) : (
               <button
-                onClick={signOut}
-                className="p-2 text-slate-400 hover:text-red-500 transition-colors"
-                title="Sign Out"
+                onClick={onLogin}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-md hover:bg-indigo-100 transition-colors"
               >
-                <LogOut size={18} />
+                <LogIn size={14} />
+                Sign In
               </button>
-            </>
-          ) : (
-            <button
-              onClick={onLogin}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-md hover:bg-indigo-100 transition-colors"
-            >
-              <LogIn size={14} />
-              Sign In
-            </button>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
     </header>
   );

@@ -1,11 +1,14 @@
 import { supabase } from './supabaseClient';
 import type { AppState, CloudPlanHeader } from '../types';
 
+const NOT_CONFIGURED = 'Cloud storage is not available. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env.local';
+
 export async function savePlan(
   userId: string,
   title: string,
   appState: AppState
 ): Promise<{ id: string | null; error: string | null }> {
+  if (!supabase) return { id: null, error: NOT_CONFIGURED };
   const { data, error } = await supabase
     .from('plans')
     .insert({
@@ -23,6 +26,7 @@ export async function savePlan(
 }
 
 export async function getPlans(userId: string): Promise<{ plans: CloudPlanHeader[]; error: string | null }> {
+  if (!supabase) return { plans: [], error: NOT_CONFIGURED };
   const { data, error } = await supabase
     .from('plans')
     .select('id, title, updated_at')
@@ -36,6 +40,7 @@ export async function getPlans(userId: string): Promise<{ plans: CloudPlanHeader
 }
 
 export async function loadPlan(planId: string): Promise<{ data: AppState | null; error: string | null }> {
+  if (!supabase) return { data: null, error: NOT_CONFIGURED };
   const { data, error } = await supabase
     .from('plans')
     .select('data')
@@ -49,6 +54,7 @@ export async function loadPlan(planId: string): Promise<{ data: AppState | null;
 }
 
 export async function deletePlan(planId: string): Promise<{ error: string | null }> {
+  if (!supabase) return { error: NOT_CONFIGURED };
   const { error } = await supabase
     .from('plans')
     .delete()

@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
-import { supabase } from '../services/supabaseClient';
+import { supabase, supabaseConfigured } from '../services/supabaseClient';
 import * as authService from '../services/authService';
 
 interface AuthContextValue {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  cloudAvailable: boolean;
   signInWithEmail: (email: string) => Promise<{ error: string | null }>;
   verifyOTP: (email: string, token: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
@@ -17,9 +18,14 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(supabaseConfigured);
 
   useEffect(() => {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       setSession(s);
@@ -49,7 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signInWithEmail, verifyOTP, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, cloudAvailable: supabaseConfigured, signInWithEmail, verifyOTP, signOut }}>
       {children}
     </AuthContext.Provider>
   );
