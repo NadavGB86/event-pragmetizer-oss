@@ -3,9 +3,10 @@ import { UserProfile, CandidatePlan, ChatMessage } from "../types";
 import { SYSTEM_INSTRUCTION_ANALYST, SYSTEM_INSTRUCTION_GENERATOR, MODEL_NAME, PRO_MODEL_NAME } from "../constants";
 import { getCurrencySymbol } from "../utils/currency";
 
-// Initialize Gemini Client
+// Initialize Gemini Client (lazy — null when API key is missing)
 // IMPORTANT: Using the recommended @google/genai initialization
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const apiKey = process.env.API_KEY;
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 /**
  * Parses the response text to separate the conversational part from the hidden JSON block.

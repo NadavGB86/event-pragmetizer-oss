@@ -2,7 +2,8 @@ import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import { ScoredPlan, UserProfile, JudgeVerdict, SoftJudgeVerdict } from "../types";
 import { PRO_MODEL_NAME } from "../constants";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const apiKey = process.env.API_KEY;
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 const SYSTEM_INSTRUCTION_JUDGE = `
 You are the "Event Pragmetizer Gatekeeper".
