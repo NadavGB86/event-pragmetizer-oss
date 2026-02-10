@@ -3,6 +3,7 @@ import { AppPhase, ChatMessage, UserProfile, CandidatePlan, ScoredPlan, AppState
 import { INITIAL_USER_PROFILE } from './constants';
 import * as GeminiService from './services/geminiService';
 import { softEvaluatePlan, evaluatePlan } from './services/judgeService';
+import { useProxy } from './services/proxyClient';
 import { assessReadiness } from './utils/readiness';
 import { mergeProfile } from './utils/profileMerge';
 import { useUndoRedo } from './hooks/useUndoRedo';
@@ -295,7 +296,7 @@ const App: React.FC = () => {
   // --- Render Logic ---
 
   // API key check — show setup screen if Gemini API key is not configured
-  if (!process.env.API_KEY || process.env.API_KEY === 'undefined') {
+  if (!useProxy && (!process.env.API_KEY || process.env.API_KEY === 'undefined')) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 p-6">
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 max-w-md w-full">

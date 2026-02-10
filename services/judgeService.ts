@@ -1,9 +1,8 @@
-import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
+import { callGemini } from './proxyClient';
+import { GenerateContentResponse } from "@google/genai";
 import { ScoredPlan, UserProfile, JudgeVerdict, SoftJudgeVerdict } from "../types";
 import { PRO_MODEL_NAME } from "../constants";
 
-const apiKey = process.env.API_KEY;
-const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 const SYSTEM_INSTRUCTION_JUDGE = `
 You are the "Event Pragmetizer Gatekeeper".
@@ -137,7 +136,7 @@ export const evaluatePlan = async (plan: ScoredPlan, profile: UserProfile): Prom
      let response: GenerateContentResponse;
      let usedGrounding = false;
      try {
-       response = await ai.models.generateContent({
+       response = await callGemini({
          model: model,
          contents: prompt,
          config: {
@@ -149,7 +148,7 @@ export const evaluatePlan = async (plan: ScoredPlan, profile: UserProfile): Prom
        usedGrounding = true;
      } catch {
        // Fallback: no grounding, use JSON mode
-       response = await ai.models.generateContent({
+       response = await callGemini({
          model: model,
          contents: prompt,
          config: {
@@ -203,7 +202,7 @@ export const softEvaluatePlan = async (plan: ScoredPlan, profile: UserProfile): 
 
     let response: GenerateContentResponse;
     try {
-      response = await ai.models.generateContent({
+      response = await callGemini({
         model: model,
         contents: prompt,
         config: {
@@ -214,7 +213,7 @@ export const softEvaluatePlan = async (plan: ScoredPlan, profile: UserProfile): 
       });
     } catch {
       // Fallback: no grounding
-      response = await ai.models.generateContent({
+      response = await callGemini({
         model: model,
         contents: prompt,
         config: {

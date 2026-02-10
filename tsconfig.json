@@ -35,7 +35,8 @@
     "services/**/*.ts",
     "hooks/**/*.ts",
     "utils/**/*.ts",
-    "context/**/*.tsx"
+    "context/**/*.tsx",
+    "api/**/*.ts"
   ],
   "exclude": [
     "node_modules",

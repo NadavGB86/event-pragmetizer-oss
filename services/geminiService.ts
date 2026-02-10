@@ -1,12 +1,9 @@
-import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
+import { callGemini } from './proxyClient';
+import { GenerateContentResponse } from "@google/genai";
 import { UserProfile, CandidatePlan, ChatMessage } from "../types";
 import { SYSTEM_INSTRUCTION_ANALYST, SYSTEM_INSTRUCTION_GENERATOR, MODEL_NAME, PRO_MODEL_NAME } from "../constants";
 import { getCurrencySymbol } from "../utils/currency";
 
-// Initialize Gemini Client (lazy — null when API key is missing)
-// IMPORTANT: Using the recommended @google/genai initialization
-const apiKey = process.env.API_KEY;
-const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 /**
  * Parses the response text to separate the conversational part from the hidden JSON block.
@@ -52,7 +49,7 @@ export const sendMessageToAnalyst = async (
     Respond to the last user message. Remember to append the JSON block if you detect new constraints or goals.
     `;
 
-    const response: GenerateContentResponse = await ai.models.generateContent({
+    const response: GenerateContentResponse = await callGemini({
       model: model,
       contents: prompt,
       config: {
@@ -87,7 +84,7 @@ export const generateCandidatePlans = async (profile: UserProfile): Promise<Scor
     `;
 
     // 2. Call LLM
-    const response: GenerateContentResponse = await ai.models.generateContent({
+    const response: GenerateContentResponse = await callGemini({
       model: model,
       contents: prompt,
       config: {
@@ -163,7 +160,7 @@ export const refinePlan = async (currentPlan: ScoredPlan, instruction: string, p
      Update the plan to address the instruction while maintaining feasibility.
      `;
      
-     const response: GenerateContentResponse = await ai.models.generateContent({
+     const response: GenerateContentResponse = await callGemini({
         model: model,
         contents: prompt,
         config: {

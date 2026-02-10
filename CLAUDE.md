@@ -65,6 +65,7 @@ Transforms unstructured natural language descriptions of event needs into feasib
 3. **Models:** `MODEL_NAME` (flash) and `PRO_MODEL_NAME` (pro) in `constants.ts`. Change there only.
 4. **API key chain:** `.env.local` (`GEMINI_API_KEY`) -> `vite.config.ts` (`define` block) -> `process.env.API_KEY` -> services
 5. **Do NOT modify `vite.config.ts` define block** unless absolutely necessary.
+6. **Dual-mode architecture:** `services/proxyClient.ts` detects `VITE_USE_PROXY=true` for Vercel proxy mode, falls back to SDK for local dev. All Gemini calls go through `callGemini()`.
 
 ---
 
@@ -82,6 +83,9 @@ npm run preview      # Preview dist/
 GEMINI_API_KEY=your_key_here
 VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# Set on Vercel only (not needed locally):
+# VITE_USE_PROXY=true
 ```
 
 ---
