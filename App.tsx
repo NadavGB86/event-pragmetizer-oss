@@ -19,7 +19,7 @@ import LoginModal from './components/auth/LoginModal';
 import CloudLoadModal from './components/persistence/CloudLoadModal';
 import { exportState, validateAndParseState } from './utils/persistence';
 import ErrorBoundary from './components/ErrorBoundary';
-import { Sparkles, KeyRound, ExternalLink } from 'lucide-react';
+import { Sparkles, KeyRound, ExternalLink, BrainCircuit, X } from 'lucide-react';
 
 const App: React.FC = () => {
   // --- State ---
@@ -78,6 +78,7 @@ const App: React.FC = () => {
   const [isCloudLoadOpen, setIsCloudLoadOpen] = useState(false);
   const [showDatePivot, setShowDatePivot] = useState(false); // Transient, not undoable
   const [isSoftJudging, setIsSoftJudging] = useState(false); // Transient, not undoable
+  const [sidebarOpen, setSidebarOpen] = useState(false); // Mobile sidebar drawer
   const { user } = useAuth();
 
   // Destructure for easier usage below (read-only)
@@ -327,7 +328,7 @@ const App: React.FC = () => {
 
   return (
     <ErrorBoundary>
-    <div className="flex flex-col h-screen bg-slate-100 overflow-hidden">
+    <div className="flex flex-col h-screen h-[100dvh] bg-slate-100 overflow-hidden">
       
       {/* App Header */}
       <AuthAwareHeader
@@ -359,15 +360,15 @@ const App: React.FC = () => {
           <>
             {/* Chat Column */}
             <div className="flex-1 flex flex-col relative z-0">
-               <ChatInterface 
-                 messages={messages} 
-                 onSendMessage={handleSendMessage} 
+               <ChatInterface
+                 messages={messages}
+                 onSendMessage={handleSendMessage}
                  isProcessing={isProcessing}
                />
-               
+
 
                {/* Floating Generate Button Area */}
-               <div className="absolute bottom-24 left-1/2 -translate-x-1/2 w-full max-w-md px-4 flex flex-col items-center gap-2">
+               <div className="absolute bottom-20 md:bottom-24 left-1/2 -translate-x-1/2 w-full max-w-md px-4 flex flex-col items-center gap-2">
                  {/* Readiness Feedback */}
                  {!readiness.isReady && messages.length > 2 && (
                     <div className="bg-amber-50 text-amber-800 text-xs px-3 py-1.5 rounded-full shadow-sm border border-amber-200 animate-fade-in">
@@ -404,7 +405,7 @@ const App: React.FC = () => {
                    className={`
                      flex items-center gap-2 px-6 py-3 rounded-full shadow-lg transition-all font-semibold
                      ${readiness.isReady
-                        ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:shadow-xl hover:scale-105'
+                        ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:shadow-xl hover:scale-105 active:scale-95'
                         : 'bg-slate-200 text-slate-400 cursor-not-allowed'}
                    `}
                  >
@@ -412,12 +413,36 @@ const App: React.FC = () => {
                    Generate Plans
                  </button>
                </div>
+
+               {/* Mobile: floating sidebar toggle */}
+               <button
+                 onClick={() => setSidebarOpen(true)}
+                 className="md:hidden absolute top-3 right-3 z-10 p-2.5 bg-white rounded-full shadow-lg border border-slate-200 text-indigo-600 active:bg-indigo-50"
+               >
+                 <BrainCircuit size={20} />
+               </button>
             </div>
 
-            {/* Sidebar Column */}
-            <div className="w-80 md:w-96 shrink-0 hidden md:block h-full shadow-xl z-10">
+            {/* Sidebar Column — desktop */}
+            <div className="w-80 lg:w-96 shrink-0 hidden md:block h-full shadow-xl z-10">
               <ProfileSidebar profile={userProfile} className="h-full" />
             </div>
+
+            {/* Sidebar Drawer — mobile */}
+            {sidebarOpen && (
+              <div className="md:hidden fixed inset-0 z-40 flex">
+                <div className="absolute inset-0 bg-black/30" onClick={() => setSidebarOpen(false)} />
+                <div className="relative ml-auto w-80 max-w-[85vw] h-full bg-white shadow-2xl animate-slide-in-right">
+                  <button
+                    onClick={() => setSidebarOpen(false)}
+                    className="absolute top-3 right-3 z-10 p-2 rounded-full text-slate-400 hover:text-slate-600 active:bg-slate-100"
+                  >
+                    <X size={20} />
+                  </button>
+                  <ProfileSidebar profile={userProfile} className="h-full" />
+                </div>
+              </div>
+            )}
           </>
         )}
 

@@ -26,17 +26,17 @@ const FinalItineraryView: React.FC<FinalViewProps> = ({ plan, onRestart, judgeVe
   const destination = extractDestination(plan.components);
 
   return (
-    <div className="h-full overflow-y-auto bg-slate-50 p-6 md:p-12">
+    <div className="h-full overflow-y-auto bg-slate-50 p-3 md:p-12">
        <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-2xl overflow-hidden border border-slate-200">
           {/* Header */}
-          <div className="bg-slate-900 text-white p-8 md:p-12 text-center relative overflow-hidden">
+          <div className="bg-slate-900 text-white p-6 md:p-12 text-center relative overflow-hidden">
              <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500 rounded-full blur-[100px] opacity-20"></div>
              <div className="relative z-10">
                  <div className="inline-flex items-center gap-2 bg-emerald-500/20 text-emerald-300 px-4 py-1.5 rounded-full text-sm font-bold mb-6 border border-emerald-500/30">
                     <CheckCircle size={16} />
                     Approved & Finalized
                  </div>
-                 <h1 className="text-4xl md:text-5xl font-bold mb-4">{plan.title}</h1>
+                 <h1 className="text-2xl md:text-5xl font-bold mb-3 md:mb-4">{plan.title}</h1>
                  <p className="text-slate-400 text-lg">Ready for booking. This itinerary is locked.</p>
                  {dateInfo?.tier === 'exact' && dateInfo.start_date && dateInfo.end_date && (
                    <div className="flex items-center justify-center gap-2 mt-3 text-indigo-300 text-sm">
@@ -48,29 +48,29 @@ const FinalItineraryView: React.FC<FinalViewProps> = ({ plan, onRestart, judgeVe
           </div>
 
           {/* Action Bar */}
-          <div className="bg-slate-50 border-b border-slate-200 p-4 flex justify-between items-center">
+          <div className="bg-slate-50 border-b border-slate-200 p-3 md:p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
              <div className="flex gap-2 items-center text-slate-500 text-xs font-bold uppercase tracking-wider">
                 <Lock size={12} />
                 Immutable Mode
              </div>
-             <div className="flex gap-3">
-                <button 
+             <div className="flex gap-2 md:gap-3 w-full sm:w-auto">
+                <button
                     onClick={() => window.print()}
-                    className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 text-sm font-medium"
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 md:px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 text-sm font-medium"
                 >
                     <Printer size={16} /> Print
                 </button>
                 <button
                     onClick={() => downloadPlanHtml(plan, judgeVerdict, participants, dateInfo)}
-                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium"
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 md:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium"
                 >
-                    <Share2 size={16} /> Share as HTML
+                    <Share2 size={16} /> Share
                 </button>
              </div>
           </div>
 
           {/* Content Placeholder for Rich Itinerary */}
-          <div className="p-12 space-y-12">
+          <div className="p-4 md:p-12 space-y-8 md:space-y-12">
               <div className="prose prose-slate max-w-none">
                   <h3>Executive Summary</h3>
                   <p>{plan.summary}</p>

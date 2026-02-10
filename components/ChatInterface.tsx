@@ -76,7 +76,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, onSendMessage, 
       </div>
 
       {/* Input Area */}
-      <div className="p-4 border-t border-slate-100 bg-white">
+      <div className="p-3 md:p-4 border-t border-slate-100 bg-white pb-safe">
         <form onSubmit={handleSubmit} className="flex gap-2">
           <input
             type="text"
