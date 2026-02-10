@@ -34,7 +34,7 @@ const App: React.FC = () => {
       // Try new single-key state
       const v2 = localStorage.getItem('ep_app_v2');
       if (v2) {
-          try { state = JSON.parse(v2); } catch {}
+          try { state = JSON.parse(v2); } catch { /* corrupt localStorage */ }
       }
 
       if (!state) {
@@ -51,7 +51,7 @@ const App: React.FC = () => {
                 id: 'init',
                 role: 'model',
                 content: "Hi! I'm your Event Pragmetizer. I'm here to turn your vague ideas into a solid plan. What kind of event are we planning today?",
-                timestamp: Date.now()
+                timestamp: 0
             }]),
             userProfile: load<UserProfile>('ep_userProfile', INITIAL_USER_PROFILE),
             generatedPlans: load<ScoredPlan[]>('ep_generatedPlans', []),

@@ -15,12 +15,21 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const handleClose = () => {
+    setStep('email');
+    setEmail('');
+    setOtp('');
+    setError(null);
+    setLoading(false);
+    onClose();
+  };
+
   // Auto-close when user authenticates (e.g. via magic link in another tab)
   useEffect(() => {
     if (user && isOpen) {
       handleClose();
     }
-  }, [user]);
+  }, [user, isOpen]);
 
   if (!isOpen) return null;
 
@@ -52,15 +61,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
     } else {
       handleClose();
     }
-  };
-
-  const handleClose = () => {
-    setStep('email');
-    setEmail('');
-    setOtp('');
-    setError(null);
-    setLoading(false);
-    onClose();
   };
 
   return (

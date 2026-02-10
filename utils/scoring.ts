@@ -19,7 +19,7 @@ export function scoreFeasibility(plan: CandidatePlan, request: SynthesisRequest)
 
       // Use the currency-native budget as primary (what the user stated),
       // fall back to budget_ils (ILS conversion) for legacy compatibility.
-      let limit = typeof hard_envelope.budget === 'number' && hard_envelope.budget > 0
+      const limit = typeof hard_envelope.budget === 'number' && hard_envelope.budget > 0
           ? hard_envelope.budget
           : (typeof hard_envelope.budget_ils === 'number' ? hard_envelope.budget_ils : 0);
       

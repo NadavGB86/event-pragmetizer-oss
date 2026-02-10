@@ -21,7 +21,7 @@ function extractBudgetInfo(constraints: { type: string; value: string | number }
   const match = val.match(/(\d{1,3}(?:,\d{3})*(?:\.\d+)?)/);
   if (!match) return null;
   
-  let rawAmount = parseFloat(match[1].replace(/,/g, ''));
+  const rawAmount = parseFloat(match[1].replace(/,/g, ''));
   
   let currency = "USD";
   let symbol = "$";

@@ -72,20 +72,32 @@ Be specific. Reference actual component titles. Make suggestions copy-pasteable 
  * Extract grounding metadata from the Gemini response.
  * The search grounding info lives in response.candidates[0].groundingMetadata.
  */
+interface GroundingChunk {
+  web?: { title?: string };
+  segment?: { text?: string };
+}
+
+interface GroundingMetadata {
+  groundingChunks?: GroundingChunk[];
+  groundingSupports?: GroundingChunk[];
+}
+
+interface CandidateWithGrounding {
+  groundingMetadata?: GroundingMetadata;
+}
+
 function extractGroundingNotes(response: GenerateContentResponse): string[] {
   try {
-    const candidates = (response as any).candidates;
+    const candidates = (response as unknown as { candidates?: CandidateWithGrounding[] }).candidates;
     if (!candidates?.[0]?.groundingMetadata) return [];
     const metadata = candidates[0].groundingMetadata;
-    // Extract search entry points or grounding chunks
     const chunks = metadata.groundingChunks || metadata.groundingSupports || [];
     return chunks
-      .map((c: any) => c.web?.title || c.segment?.text || '')
+      .map((c: GroundingChunk) => c.web?.title || c.segment?.text || '')
       .filter((s: string) => s.length > 0)
       .slice(0, 5);
-  } catch {
-    return [];
-  }
+  } catch { /* grounding metadata unavailable */ }
+  return [];
 }
 
 /**
@@ -93,7 +105,7 @@ function extractGroundingNotes(response: GenerateContentResponse): string[] {
  */
 function safeParseJson<T>(text: string): T {
   // Try direct parse first
-  try { return JSON.parse(text); } catch {}
+  try { return JSON.parse(text); } catch { /* not plain JSON, try fenced */ }
   // Try stripping markdown code fences
   const match = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
   if (match) {

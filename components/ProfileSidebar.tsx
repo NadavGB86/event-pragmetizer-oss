@@ -127,7 +127,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ profile, className }) =
                  <div className="mb-3 p-3 bg-amber-50 rounded border border-amber-100">
                     <p className="text-xs font-medium text-amber-700 mb-1">Vision & Vibe:</p>
                     <ul className="list-disc list-inside space-y-1">
-                      {goals.visions.map((v, i) => (
+                      {goals.visions.map((v) => (
                           <li key={`vision-${v.description}`} className="text-xs text-amber-800 italic">{v.description}</li>
                       ))}
                     </ul>
@@ -145,7 +145,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ profile, className }) =
                  <div className="mt-2">
                     <p className="text-xs font-medium text-slate-500 mb-1">Wants:</p>
                     <div className="flex flex-wrap gap-1">
-                        {goals.declared_wants.map((w, i) => (
+                        {goals.declared_wants.map((w) => (
                              <span key={`want-${w}`} className="px-2 py-1 bg-pink-50 text-pink-700 border border-pink-100 text-xs rounded-full">{w}</span>
                         ))}
                     </div>

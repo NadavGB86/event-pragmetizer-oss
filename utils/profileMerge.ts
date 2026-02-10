@@ -1,4 +1,4 @@
-import { UserProfile } from '../types';
+import { UserProfile, Constraint } from '../types';
 
 /**
  * Merges two arrays, deduplicating items.
@@ -18,8 +18,8 @@ function mergeArrayField<T>(existing: T[] | undefined, incoming: T[] | undefined
     
     if (deduplicateKey && typeof item === 'object' && item !== null) {
         // Deduplicate by specific key (e.g., constraint type + value)
-         isDuplicate = merged.some(e => 
-            (e as any)[deduplicateKey] === (item as any)[deduplicateKey]
+         isDuplicate = merged.some(e =>
+            (e as Record<string, unknown>)[deduplicateKey as string] === (item as Record<string, unknown>)[deduplicateKey as string]
          );
          
          // Special handling for Constraint: check both type AND value if we are looking at constraints
@@ -43,7 +43,7 @@ function mergeArrayField<T>(existing: T[] | undefined, incoming: T[] | undefined
 /**
  * Specifically merges constraints, deduping by matching type AND value.
  */
-function mergeConstraints(existing: any[], incoming: any[]): any[] {
+function mergeConstraints(existing: Constraint[], incoming: Constraint[]): Constraint[] {
     const safeExisting = existing || [];
     const safeIncoming = incoming || [];
     const merged = [...safeExisting];

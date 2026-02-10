@@ -1,5 +1,5 @@
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
-import { UserProfile, CandidatePlan, ChatMessage, SynthesisRequest } from "../types";
+import { UserProfile, CandidatePlan, ChatMessage } from "../types";
 import { SYSTEM_INSTRUCTION_ANALYST, SYSTEM_INSTRUCTION_GENERATOR, MODEL_NAME, PRO_MODEL_NAME } from "../constants";
 import { getCurrencySymbol } from "../utils/currency";
 

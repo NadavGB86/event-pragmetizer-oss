@@ -16,12 +16,6 @@ const CloudLoadModal: React.FC<CloudLoadModalProps> = ({ isOpen, onClose, userId
   const [error, setError] = useState<string | null>(null);
   const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchPlans();
-    }
-  }, [isOpen]);
-
   const fetchPlans = async () => {
     setLoading(true);
     setError(null);
@@ -30,6 +24,12 @@ const CloudLoadModal: React.FC<CloudLoadModalProps> = ({ isOpen, onClose, userId
     setError(err);
     setLoading(false);
   };
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchPlans();
+    }
+  }, [isOpen]);
 
   const handleLoad = async (planId: string) => {
     setLoadingPlanId(planId);
