@@ -1,8 +1,8 @@
 # OSS Maturation Roadmap
 
 **Created:** 2026-02-10
-**Status:** Approved plan — ready for execution
-**Supersedes:** `docs/14_OPEN_SOURCE_READINESS_PLAN.md` (initial brainstorm)
+**Status:** Phases 0-1, 2.1-2.2, 3-5, 6 complete. Phase 2.3 (backend proxy) deferred — awaiting deployment platform decision.
+**Supersedes:** `docs/archive/14_OPEN_SOURCE_READINESS_PLAN.md` (initial brainstorm)
 
 This document is the implementation blueprint for transforming Event Pragmetizer from a working prototype into a production-grade open-source application. It was produced by parallel deep-dive research across 5 workstreams (community, build tooling, security, mobile, testing) and consolidated into a phased execution plan.
 

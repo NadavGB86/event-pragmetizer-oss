@@ -1,5 +1,55 @@
 # Changelog — Event Pragmetizer OSS
 
+## 2.0.0 (2026-02-10)
+
+The first production-grade release. Transforms the M3.0 prototype into an installable, testable, mobile-friendly open-source application.
+
+### Build Tooling (Phase 1)
+- **Tailwind CSS v3** compiled build — migrated from CDN to PostCSS pipeline with `tailwind.config.js`, `postcss.config.js`, and `app.css`
+- **ESLint 9** with flat config (`eslint.config.js`) — TypeScript-aware, React Hooks, React Refresh
+- **Prettier** with Tailwind plugin for consistent class ordering
+- **GitHub Actions CI** — typecheck, lint, test, and build on every push/PR to master
+
+### Security & DX (Phase 2)
+- **API key startup check** — white screen replaced with clear setup instructions when `GEMINI_API_KEY` is missing
+- **Lazy GoogleGenAI initialization** — SDK client created on first use, not at import time
+- **Supabase graceful degradation** — cloud features hidden when credentials are absent; app works fully with localStorage
+- **Diagnostic logging** for Supabase configuration state (visible in DevTools console)
+
+### Community & Documentation (Phase 3)
+- **CONTRIBUTING.md** — setup guide, code style, architecture overview, SDK rules, commit convention, PR process
+- **GitHub issue templates** — bug report and feature request (YAML form format)
+- **Pull request template** — checklist for build, typecheck, lint, test, types, and conventional commits
+
+### Mobile Responsiveness & PWA (Phase 4)
+- **PWA manifest** (`public/manifest.json`) — installable as standalone app
+- **Dynamic viewport height** — `h-[100dvh]` for iOS/Android browser chrome handling
+- **Mobile header** — hamburger menu with grouped actions, undo/redo always visible
+- **Mobile sidebar drawer** — slide-in profile panel with backdrop overlay and close button
+- **Responsive views** — PlanComparison, ExecutionView, FinalItineraryView, and ChatInterface adapted for small screens
+- **Safe area padding** — `env(safe-area-inset-bottom)` for iOS home indicator
+- **Slide-in animation** — custom Tailwind `slide-in-right` keyframe
+
+### Testing (Phase 5)
+- **Vitest** test runner with 66 unit tests across 6 utility files
+- **Test coverage:** scoring, sanity checks, request building, profile merging, readiness assessment, currency formatting
+- **Shared fixtures** (`utils/__fixtures__.ts`) — reusable profile, plan, and component test data
+- **CI integration** — tests run automatically in GitHub Actions pipeline
+
+### Polish & Release (Phase 6)
+- **README** — CI and license badges, development scripts section, updated tech stack
+- **CONTRIBUTING.md** — added test scripts to available commands and workflow
+- **Archive cleanup** — moved initial brainstorm plan to `docs/archive/`
+- **Roadmap** — updated with completion status
+- **Version bump** — 1.0.0 → 2.0.0
+
+### Known Limitations
+- API key is still in the client bundle — backend proxy (Phase 2.3) deferred pending deployment platform decision
+- PWA icons are placeholders (192px and 512px PNGs not yet created)
+- Supabase degradation bug under investigation (diagnostic logging added)
+
+---
+
 ## 1.0.0 (2026-02-10)
 
 ### Project Initialized
@@ -20,9 +70,3 @@
 - Cloud persistence via Supabase with magic link auth
 - JSON backup export/import + styled HTML share
 - Actionable links (Google Maps, Booking.com, Search)
-
-### Known Issues (carried from M3.0)
-- See `docs/10_TRADEOFFS_AND_LOOSE_ENDS.md` for full list
-- API key in client bundle (needs backend proxy for production)
-- Tailwind via CDN (needs compiled build for production)
-- No tests yet

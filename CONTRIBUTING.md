@@ -37,8 +37,9 @@ Without Supabase variables, the app works with localStorage only. Cloud features
 
 1. Run `npm run dev` to start the dev server (port 5175)
 2. Make your changes
-3. Run `npm run build` to verify the production build
-4. Run `npm run typecheck` and `npm run lint` before committing
+3. Run `npm run test` to ensure all tests pass
+4. Run `npm run build` to verify the production build
+5. Run `npm run typecheck` and `npm run lint` before committing
 
 ### Available Scripts
 
@@ -52,6 +53,9 @@ Without Supabase variables, the app works with localStorage only. Cloud features
 | `npm run lint:fix` | Auto-fix ESLint issues |
 | `npm run format` | Format with Prettier |
 | `npm run format:check` | Check formatting |
+| `npm run test` | Run test suite |
+| `npm run test:watch` | Run tests in watch mode |
+| `npm run test:coverage` | Run tests with coverage report |
 
 ## Code Style
 
@@ -102,7 +106,7 @@ One feature per commit. Keep commits focused and atomic.
 
 1. **Open an issue first** to discuss what you'd like to change
 2. **Branch from `master`** — use descriptive branch names (`feat/chat-scroll`, `fix/scoring-bug`)
-3. **Run `npm run build`** before submitting — PRs that don't build will be rejected by CI
+3. **Run `npm run test` and `npm run build`** before submitting — PRs that fail CI will be rejected
 4. **Describe your changes** in the PR description
 5. **Link the related issue**
 

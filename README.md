@@ -1,5 +1,8 @@
 # Event Pragmetizer
 
+[![CI](https://github.com/NadavGB86/event-pragmetizer-oss/actions/workflows/ci.yml/badge.svg)](https://github.com/NadavGB86/event-pragmetizer-oss/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 AI-powered event planning that transforms natural language descriptions into feasible, personalized event plans.
 
 ## What It Does
@@ -67,9 +70,11 @@ Without Supabase, the app works fully with localStorage-based persistence.
 
 - **React 19** + TypeScript
 - **Vite** (build tool)
-- **Tailwind CSS** (styling)
+- **Tailwind CSS v3** (compiled, with typography plugin)
 - **Google Gemini API** (`@google/genai`) — Flash for chat, Pro for generation/judging
 - **Supabase** (optional — auth + cloud persistence)
+- **Vitest** (testing)
+- **ESLint 9** + **Prettier** (code quality)
 - **Lucide React** (icons)
 
 ## Project Structure
@@ -89,9 +94,22 @@ Without Supabase, the app works fully with localStorage-based persistence.
 │   ├── judgeService.ts        # Hard + Soft judge with grounding
 │   └── ...
 ├── hooks/                     # State logic
-├── utils/                     # Pure functions
+├── utils/                     # Pure functions + test files
 ├── context/                   # React contexts
-└── docs/                      # Documentation
+├── docs/                      # Documentation
+└── public/                    # Static assets + PWA manifest
+```
+
+## Development
+
+```bash
+npm run dev          # Start dev server (port 5175)
+npm run build        # Production build
+npm run typecheck    # Type-check
+npm run lint         # ESLint
+npm run test         # Run test suite (66 tests)
+npm run test:watch   # Watch mode
+npm run format       # Prettier
 ```
 
 ## Contributing
