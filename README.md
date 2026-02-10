@@ -51,7 +51,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-The app will be available at `http://localhost:5173`.
+The app will be available at `http://localhost:5175`.
 
 ### Environment Variables
 
@@ -96,11 +96,11 @@ Without Supabase, the app works fully with localStorage-based persistence.
 
 ## Contributing
 
-Contributions welcome. Please open an issue first to discuss what you'd like to change.
+Contributions welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code style, and PR guidelines. Open an issue first to discuss what you'd like to change.
 
 ## License
 
-MIT
+[MIT](LICENSE)
 
 ## Origin
 
