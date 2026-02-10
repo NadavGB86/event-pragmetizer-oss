@@ -68,36 +68,24 @@ const PlanComparison: React.FC<PlanComparisonProps> = ({ plans, onSelect, onRege
                 ${isFeasible ? 'bg-white border-slate-200 hover:border-indigo-300' : 'bg-red-50 border-red-200 opacity-90'}
               `}>
                 
-                {/* Feasibility Badge */}
-                <div className="absolute top-4 right-4 z-10">
-                   {/* Logic extracted for readability */}
-                   {(() => {
-                       const isHighScoring = score.overall_score >= 80;
-                       
-                       let badgeClass = 'bg-red-100 text-red-700'; // Default fail
-                       if (isFeasible) {
-                           badgeClass = isHighScoring ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700';
-                       }
-
-                       let scoreColor = 'text-red-500';
-                       if (plan.computed_score.overall_score >= 80) scoreColor = 'text-green-600';
-                       else if (plan.computed_score.overall_score >= 60) scoreColor = 'text-amber-600';
-
-                       return (
-                           <div className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-sm ${badgeClass}`}>
-                               <span className={`text-2xl font-bold ${scoreColor}`}>
-                                   {plan.computed_score.overall_score}%
-                               </span>
-                               {isFeasible ? <Check size={12}/> : <AlertTriangle size={12}/>}
-                               {score.overall_score}% Match
-                           </div>
-                       );
-                   })()}
-                </div>
-
                 {/* Header */}
                 <div className="p-6 border-b border-slate-100/50 pb-4">
-                  <h3 className="text-xl font-bold text-slate-800 leading-tight pr-20">{plan.title}</h3>
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="text-xl font-bold text-slate-800 leading-tight">{plan.title}</h3>
+                    {/* Feasibility Badge */}
+                    {(() => {
+                       let badgeClass = 'bg-red-100 text-red-700';
+                       if (isFeasible) {
+                           badgeClass = score.overall_score >= 80 ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700';
+                       }
+                       return (
+                           <div className={`px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-sm shrink-0 ${badgeClass}`}>
+                               {isFeasible ? <Check size={12}/> : <AlertTriangle size={12}/>}
+                               {score.overall_score}%
+                           </div>
+                       );
+                    })()}
+                  </div>
                   <div className="mt-4 flex flex-col gap-2">
                     {/* Budget Score Line */}
                     <div className="flex items-center justify-between text-sm">

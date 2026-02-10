@@ -60,6 +60,10 @@ const AuthAwareHeader: React.FC<AuthAwareHeaderProps> = ({
       <div className="flex items-center gap-2">
         <CalendarCheck className="w-6 h-6 text-indigo-600" />
         <h1 className="font-bold text-slate-800 tracking-tight text-sm md:text-base">Event Pragmetizer</h1>
+        {/* Mobile phase indicator */}
+        <span className="md:hidden text-[11px] font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
+          {phase === AppPhase.INTAKE ? 'Profile' : phase === AppPhase.MATCHING ? 'Match' : phase === AppPhase.EXECUTION ? 'Refine' : 'Final'}
+        </span>
       </div>
 
       {/* Desktop controls — hidden on mobile */}

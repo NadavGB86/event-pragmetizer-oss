@@ -242,9 +242,17 @@ const App: React.FC = () => {
 
   const handleSelectPlan = (plan: CandidatePlan) => {
     setSelectedPlan(plan);
+    setJudgeFeedback(null);
     setSoftJudgeFeedback(null);
     setPhase(AppPhase.EXECUTION);
     triggerSoftJudge(plan as ScoredPlan);
+  };
+
+  const handleJudgeRejectionBack = () => {
+    setJudgeFeedback(null);
+    setSoftJudgeFeedback(null);
+    setSelectedPlan(null);
+    setPhase(AppPhase.MATCHING);
   };
 
   const handleRefinePlan = async (instruction: string) => {
@@ -448,7 +456,7 @@ const App: React.FC = () => {
 
         {/* Phase 2: Synthesis (Loading) */}
         {phase === AppPhase.SYNTHESIS && (
-             <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50">
+             <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 text-center px-6">
                  <div className="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-6"></div>
                  <h2 className="text-xl font-semibold text-slate-800">Synthesizing Options...</h2>
                  <p className="text-slate-500 mt-2">The Analyst is reviewing your constraints against possibilities.</p>
@@ -473,6 +481,7 @@ const App: React.FC = () => {
              <ExecutionView
                plan={selectedPlan as ScoredPlan}
                onBack={() => setPhase(AppPhase.MATCHING)}
+               onBackToOptions={handleJudgeRejectionBack}
                onUpdatePlan={(instruction) => handleRefinePlan(instruction)}
                onFinalize={handleFinalizePlan}
                judgeFeedback={judgeFeedback}

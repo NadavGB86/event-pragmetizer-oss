@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { ScoredPlan, JudgeVerdict, SoftJudgeVerdict, ParticipantProfile, DateInfo } from '../types';
-import { ChevronLeft, Calendar, MapPin, CreditCard, Send, Sparkles, OctagonAlert, ExternalLink, Hotel, Search, Globe, Loader2 } from 'lucide-react';
+import { ChevronLeft, Calendar, MapPin, CreditCard, Send, Sparkles, OctagonAlert, ExternalLink, Hotel, Search, Globe, Loader2, ArrowLeft } from 'lucide-react';
 import { getCurrencySymbol } from '../utils/currency';
 import { getComponentLinks, extractDestination } from '../utils/links';
 
 interface ExecutionViewProps {
   plan: ScoredPlan;
   onBack: () => void;
+  onBackToOptions?: () => void;
   onUpdatePlan?: (instruction: string) => void;
   onFinalize?: () => void;
   judgeFeedback?: JudgeVerdict | null;
@@ -25,7 +26,7 @@ const ExecLinkIcon: React.FC<{ type: string }> = ({ type }) => {
   }
 };
 
-const ExecutionView: React.FC<ExecutionViewProps> = ({ plan, onBack, onUpdatePlan, onFinalize, judgeFeedback, softJudgeFeedback, isSoftJudging, participants, dateInfo }) => {
+const ExecutionView: React.FC<ExecutionViewProps> = ({ plan, onBack, onBackToOptions, onUpdatePlan, onFinalize, judgeFeedback, softJudgeFeedback, isSoftJudging, participants, dateInfo }) => {
   const [refinementText, setRefinementText] = useState("");
   const destination = extractDestination(plan.components);
   const [isRefining, setIsRefining] = useState(false);
@@ -285,14 +286,22 @@ const ExecutionView: React.FC<ExecutionViewProps> = ({ plan, onBack, onUpdatePla
              {judgeFeedback && !judgeFeedback.pass && (
                  <div className="mb-4 bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3 animate-slide-up">
                      <div className="bg-red-100 p-2 rounded-full text-red-600 shrink-0">
-                         <OctagonAlert size={20} /> 
+                         <OctagonAlert size={20} />
                      </div>
-                     <div>
+                     <div className="flex-1">
                          <h4 className="text-red-800 font-bold mb-1">Judge Rejected Plan</h4>
                          <p className="text-red-700 text-sm mb-2 font-medium">{judgeFeedback.reasoning}</p>
-                         <ul className="list-disc list-inside text-xs text-red-600 space-y-1 pl-1">
+                         <ul className="list-disc list-inside text-xs text-red-600 space-y-1 pl-1 mb-3">
                              {judgeFeedback.feedback.map((f) => <li key={`fb-${f}`}>{f}</li>)}
                          </ul>
+                         <div className="flex gap-2">
+                             <button
+                               onClick={onBackToOptions}
+                               className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-white border border-red-200 text-red-700 rounded-lg hover:bg-red-100 transition-colors"
+                             >
+                               <ArrowLeft size={14} /> Try Different Plan
+                             </button>
+                         </div>
                      </div>
                  </div>
              )}
