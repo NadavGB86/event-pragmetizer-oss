@@ -1,5 +1,3 @@
-export const config = { runtime: 'edge' };
-
 const ALLOWED_MODELS = ['gemini-3-flash-preview', 'gemini-3-pro-preview'];
 const MAX_BODY_SIZE = 100 * 1024; // 100KB
 

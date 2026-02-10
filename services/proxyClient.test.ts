@@ -176,6 +176,50 @@ describe('proxyClient', () => {
     });
   });
 
+  // --- BYOK (Bring Your Own Key) ---
+  describe('BYOK helpers', () => {
+    let store: Record<string, string>;
+
+    beforeEach(() => {
+      store = {};
+      vi.stubGlobal('localStorage', {
+        getItem: (key: string) => store[key] ?? null,
+        setItem: (key: string, val: string) => { store[key] = val; },
+        removeItem: (key: string) => { delete store[key]; },
+      });
+    });
+
+    it('getUserApiKey returns empty when no key stored', async () => {
+      const { getUserApiKey } = await import('./proxyClient');
+      expect(getUserApiKey()).toBe('');
+    });
+
+    it('setUserApiKey stores and getUserApiKey retrieves the key', async () => {
+      const { getUserApiKey, setUserApiKey } = await import('./proxyClient');
+      setUserApiKey('AIzaSy-test-key');
+      expect(getUserApiKey()).toBe('AIzaSy-test-key');
+    });
+
+    it('setUserApiKey with empty string removes the key', async () => {
+      const { getUserApiKey, setUserApiKey } = await import('./proxyClient');
+      setUserApiKey('some-key');
+      setUserApiKey('');
+      expect(getUserApiKey()).toBe('');
+    });
+
+    it('hasGeminiAccess returns true when BYOK key is set', async () => {
+      const { hasGeminiAccess, setUserApiKey } = await import('./proxyClient');
+      setUserApiKey('AIzaSy-test-key');
+      expect(hasGeminiAccess()).toBe(true);
+    });
+
+    it('hasGeminiAccess returns true when build-time key exists', async () => {
+      const { hasGeminiAccess } = await import('./proxyClient');
+      // process.env.API_KEY is set at top of file
+      expect(hasGeminiAccess()).toBe(true);
+    });
+  });
+
   // Note: Proxy mode (fetch-based) tests require VITE_USE_PROXY=true at module load time.
   // Since this is a compile-time env var, proxy mode is best tested via integration/E2E
   // tests against a running Vercel deployment. The SDK pass-through tests above verify

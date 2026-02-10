@@ -3,7 +3,7 @@ import { AppPhase, ChatMessage, UserProfile, CandidatePlan, ScoredPlan, AppState
 import { INITIAL_USER_PROFILE } from './constants';
 import * as GeminiService from './services/geminiService';
 import { softEvaluatePlan, evaluatePlan } from './services/judgeService';
-import { useProxy } from './services/proxyClient';
+import { hasGeminiAccess, setUserApiKey } from './services/proxyClient';
 import { assessReadiness } from './utils/readiness';
 import { mergeProfile } from './utils/profileMerge';
 import { useUndoRedo } from './hooks/useUndoRedo';
@@ -80,6 +80,8 @@ const App: React.FC = () => {
   const [showDatePivot, setShowDatePivot] = useState(false); // Transient, not undoable
   const [isSoftJudging, setIsSoftJudging] = useState(false); // Transient, not undoable
   const [sidebarOpen, setSidebarOpen] = useState(false); // Mobile sidebar drawer
+  const [apiKeyInput, setApiKeyInput] = useState('');
+  const [hasKey, setHasKey] = useState(() => hasGeminiAccess());
   const { user } = useAuth();
 
   // Destructure for easier usage below (read-only)
@@ -174,6 +176,13 @@ const App: React.FC = () => {
 
   const handleCloudLoad = (data: AppState) => {
     setState(data);
+  };
+
+  const handleSaveApiKey = () => {
+    const key = apiKeyInput.trim();
+    if (!key) return;
+    setUserApiKey(key);
+    setHasKey(true);
   };
 
   // Derived State
@@ -295,8 +304,8 @@ const App: React.FC = () => {
 
   // --- Render Logic ---
 
-  // API key check — show setup screen if Gemini API key is not configured
-  if (!useProxy && (!process.env.API_KEY || process.env.API_KEY === 'undefined')) {
+  // API key check — show setup screen if no Gemini access method is available
+  if (!hasKey) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 p-6">
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 max-w-md w-full">
@@ -310,7 +319,7 @@ const App: React.FC = () => {
             </div>
           </div>
           <div className="space-y-4 text-sm text-slate-600">
-            <p>This app uses the Google Gemini API to power its AI features. To get started:</p>
+            <p>This app uses the Google Gemini API. You need your own (free) API key:</p>
             <ol className="list-decimal list-inside space-y-2 pl-1">
               <li>
                 <a
@@ -322,13 +331,31 @@ const App: React.FC = () => {
                   Get a free Gemini API key <ExternalLink size={12} />
                 </a>
               </li>
-              <li>Copy <code className="bg-slate-100 px-1.5 py-0.5 rounded text-xs font-mono">.env.example</code> to <code className="bg-slate-100 px-1.5 py-0.5 rounded text-xs font-mono">.env.local</code></li>
-              <li>Add your key: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-xs font-mono">GEMINI_API_KEY=your_key</code></li>
-              <li>Restart the dev server</li>
+              <li>Paste it below:</li>
             </ol>
+            <div className="flex gap-2">
+              <input
+                type="password"
+                value={apiKeyInput}
+                onChange={(e) => setApiKeyInput(e.target.value)}
+                placeholder="AIzaSy..."
+                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono"
+                onKeyDown={(e) => e.key === 'Enter' && handleSaveApiKey()}
+              />
+              <button
+                onClick={handleSaveApiKey}
+                disabled={!apiKeyInput.trim()}
+                className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Save
+              </button>
+            </div>
+            <p className="text-xs text-slate-400">Your key is stored locally in your browser. It is never sent to our servers.</p>
           </div>
           <div className="mt-6 p-3 bg-slate-50 rounded-lg border border-slate-200">
-            <p className="text-xs text-slate-500 font-mono">cp .env.example .env.local</p>
+            <p className="text-xs text-slate-500">
+              <strong>Developers:</strong> You can also set <code className="bg-slate-100 px-1 py-0.5 rounded font-mono">GEMINI_API_KEY</code> in <code className="bg-slate-100 px-1 py-0.5 rounded font-mono">.env.local</code> instead.
+            </p>
           </div>
         </div>
       </div>

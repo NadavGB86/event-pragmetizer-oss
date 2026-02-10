@@ -1,11 +1,33 @@
 import { GoogleGenAI, type GenerateContentResponse } from "@google/genai";
 
-/** True when running on Vercel with the edge proxy */
+const STORAGE_KEY = 'ep_gemini_api_key';
+
+/** True when running on Vercel with the serverless proxy */
 export const useProxy: boolean = import.meta.env.VITE_USE_PROXY === 'true';
 
-// SDK client — only initialized when we have a local API key
-const apiKey = process.env.API_KEY;
-const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
+// Build-time API key (local dev via .env.local)
+const buildTimeKey = process.env.API_KEY;
+
+/** Get the user's BYOK key from localStorage */
+export function getUserApiKey(): string {
+  try { return localStorage.getItem(STORAGE_KEY) || ''; } catch { return ''; }
+}
+
+/** Save or clear the user's BYOK key */
+export function setUserApiKey(key: string): void {
+  try {
+    if (key) localStorage.setItem(STORAGE_KEY, key);
+    else localStorage.removeItem(STORAGE_KEY);
+  } catch { /* localStorage unavailable */ }
+}
+
+/** True if any Gemini access method is available */
+export function hasGeminiAccess(): boolean {
+  return !!(getUserApiKey() || buildTimeKey || useProxy);
+}
+
+// SDK client for build-time key (local dev)
+const buildTimeAi = buildTimeKey ? new GoogleGenAI({ apiKey: buildTimeKey }) : null;
 
 /** Parameters accepted by callGemini — mirrors the SDK's generateContent config */
 export interface GeminiCallParams {
@@ -51,18 +73,13 @@ function toRestBody(params: GeminiCallParams): Record<string, unknown> {
 
 /**
  * Normalize a raw Gemini REST JSON response into an SDK-compatible shape.
- * The SDK response has a `.text` getter that returns the first candidate's text.
- * We replicate that plus preserve the full `candidates` array for grounding metadata.
  */
 function fromRestResponse(json: Record<string, unknown>): GenerateContentResponse {
-  // The raw REST response has: { candidates: [{ content: { parts: [{ text: "..." }] }, groundingMetadata: {...} }] }
   const candidates = (json.candidates as Array<Record<string, unknown>>) || [];
   const firstCandidate = candidates[0] as Record<string, unknown> | undefined;
   const content = firstCandidate?.content as { parts?: Array<{ text?: string }> } | undefined;
   const text = content?.parts?.[0]?.text || '';
 
-  // Return an object that mimics GenerateContentResponse
-  // The SDK's .text property is a getter, we attach it directly
   return {
     text,
     candidates,
@@ -70,32 +87,46 @@ function fromRestResponse(json: Record<string, unknown>): GenerateContentRespons
 }
 
 /**
- * Unified Gemini caller. Uses SDK locally, proxy in production.
+ * Unified Gemini caller. Priority: BYOK key > build-time key > proxy.
  */
 export async function callGemini(params: GeminiCallParams): Promise<GenerateContentResponse> {
-  if (!useProxy) {
-    // SDK mode — direct call
-    if (!ai) throw new Error('Gemini API key not configured');
-    return ai.models.generateContent({
+  // 1. BYOK — user's own key (stored in localStorage)
+  const userKey = getUserApiKey();
+  if (userKey) {
+    const userAi = new GoogleGenAI({ apiKey: userKey });
+    return userAi.models.generateContent({
       model: params.model,
       contents: params.contents,
       config: params.config,
     });
   }
 
-  // Proxy mode — REST via edge function
-  const body = toRestBody(params);
-  const res = await fetch('/api/gemini', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: params.model, ...body }),
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: 'Proxy request failed' }));
-    throw new Error((err as { error?: string }).error || `Proxy error: ${res.status}`);
+  // 2. Build-time key (local dev with .env.local)
+  if (buildTimeAi) {
+    return buildTimeAi.models.generateContent({
+      model: params.model,
+      contents: params.contents,
+      config: params.config,
+    });
   }
 
-  const json = await res.json();
-  return fromRestResponse(json as Record<string, unknown>);
+  // 3. Proxy mode (Vercel serverless function)
+  if (useProxy) {
+    const body = toRestBody(params);
+    const res = await fetch('/api/gemini', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: params.model, ...body }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Proxy request failed' }));
+      throw new Error((err as { error?: string }).error || `Proxy error: ${res.status}`);
+    }
+
+    const json = await res.json();
+    return fromRestResponse(json as Record<string, unknown>);
+  }
+
+  throw new Error('Gemini API key not configured');
 }
