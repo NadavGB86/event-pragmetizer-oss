@@ -114,6 +114,12 @@ Generate 3 distinct Candidate Plans that fit the User Profile BUT MUST OBEY THE 
     - Peak season (Jul-Aug, Dec holidays, Easter): +20-30% on accommodation and flights.
     - Shoulder season (Apr-Jun, Sep-Oct): Standard pricing.
     - Off-peak (Nov, Jan-Mar excl. holidays): -10-20% on accommodation.
+10. **Destination Constraints:** Respect ALL location preferences from the user profile.
+    - The traveler's origin is specified in hard_envelope.origin (e.g., "TLV" = Tel Aviv, Israel).
+    - If the profile mentions "abroad", "overseas", "international", or "outside [country]",
+      ALL plans MUST be in a DIFFERENT country than the origin. Do NOT suggest domestic destinations.
+    - If the profile specifies a particular city/country, prioritize it. If it specifies a region
+      (e.g., "Europe", "Southeast Asia"), all plans must be within that region.
 
 **OUTPUT FORMAT:**
 Return the result purely as a JSON object containing an array of 'CandidatePlan' objects.

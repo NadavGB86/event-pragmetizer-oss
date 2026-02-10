@@ -76,8 +76,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
         <h2 className="text-lg font-bold text-slate-800 mb-1">Sign In</h2>
         <p className="text-sm text-slate-500 mb-5">
           {step === 'email'
-            ? 'Enter your email to receive a sign-in link.'
-            : 'Check your email — click the magic link, or enter the 6-digit code below.'}
+            ? 'Enter your email to receive a sign-in code.'
+            : 'Check your email for a 6-digit code and enter it below.'}
         </p>
 
         {error && (
@@ -106,7 +106,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
               className="w-full py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? <Loader2 size={16} className="animate-spin" /> : <Mail size={16} />}
-              {loading ? 'Sending...' : 'Send Magic Link'}
+              {loading ? 'Sending...' : 'Send Code'}
             </button>
           </form>
         ) : (
@@ -124,6 +124,11 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
                 autoFocus
               />
             </div>
+            {globalThis.location?.hostname !== 'localhost' && globalThis.location?.hostname !== '127.0.0.1' && (
+              <p className="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg border border-amber-200">
+                On mobile? Use the 6-digit code from the email — do not click the magic link (it only works on the computer running the server).
+              </p>
+            )}
             <button
               type="submit"
               disabled={loading || otp.length < 6}
