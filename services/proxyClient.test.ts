@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+// Ensure API key is set before proxyClient module loads (CI has no .env.local)
+process.env.API_KEY = 'test-key-for-ci';
+
 // Mock the GoogleGenAI SDK before any imports
 const mockGenerateContent = vi.fn();
 
