@@ -46,7 +46,7 @@ export default async function handler(req: Request): Promise<Response> {
       status: geminiRes.ok ? 200 : 502,
       headers: { 'Content-Type': 'application/json' },
     });
-  } catch (err) {
+  } catch {
     return new Response(JSON.stringify({ error: 'Gemini API request failed' }), { status: 502, headers: { 'Content-Type': 'application/json' } });
   }
 }
