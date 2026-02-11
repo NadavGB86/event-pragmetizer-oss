@@ -182,4 +182,12 @@ Sibling projects:
 
 ---
 
-*Created: 2026-02-10 | Updated: 2026-02-11 (v3.3.0)*
+## Known Issues & Investigation Items
+
+- **Judge outline-vs-detail gap:** With the outline→detail flow, a plan outline may pass the soft judge but the expanded detail may fail the hard judge. Currently there is no clear UX feedback explaining *what changed* between the outline approval and the detail rejection. Needs investigation — see Priority 1 in backlog.
+- **Budget regex:** Only handles comma-formatted numbers (`$3,000` not `3000`).
+- **Soft judge in Lite mode:** Flash-Lite may struggle with judge complexity — error is surfaced to user.
+
+---
+
+*Created: 2026-02-10 | Updated: 2026-02-11 (v3.3.0 stable)*
