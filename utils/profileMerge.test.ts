@@ -47,6 +47,50 @@ describe('mergeProfile', () => {
     expect(result.needs.constraints).toHaveLength(1);
   });
 
+  it('replaces budget constraint when value changes (singleton type)', () => {
+    const existing: UserProfile = structuredClone(EMPTY_PROFILE);
+    existing.needs.constraints = [{ type: 'budget', value: '$5,000 USD', flexibility: 'hard' }];
+
+    const result = mergeProfile(existing, {
+      needs: {
+        ...existing.needs,
+        constraints: [{ type: 'budget', value: '$8,000 USD', flexibility: 'soft' }],
+      },
+    });
+    // Budget is a singleton type — should replace, not append
+    expect(result.needs.constraints).toHaveLength(1);
+    expect(result.needs.constraints[0].value).toBe('$8,000 USD');
+    expect(result.needs.constraints[0].flexibility).toBe('soft');
+  });
+
+  it('replaces time constraint when value changes (singleton type)', () => {
+    const existing: UserProfile = structuredClone(EMPTY_PROFILE);
+    existing.needs.constraints = [{ type: 'time', value: '3 nights', flexibility: 'hard' }];
+
+    const result = mergeProfile(existing, {
+      needs: {
+        ...existing.needs,
+        constraints: [{ type: 'time', value: '5 nights', flexibility: 'soft' }],
+      },
+    });
+    expect(result.needs.constraints).toHaveLength(1);
+    expect(result.needs.constraints[0].value).toBe('5 nights');
+  });
+
+  it('appends non-singleton constraints (logistics, geographic, social)', () => {
+    const existing: UserProfile = structuredClone(EMPTY_PROFILE);
+    existing.needs.constraints = [{ type: 'logistics', value: 'direct flights only', flexibility: 'hard' }];
+
+    const result = mergeProfile(existing, {
+      needs: {
+        ...existing.needs,
+        constraints: [{ type: 'logistics', value: 'no red-eye flights', flexibility: 'soft' }],
+      },
+    });
+    // Non-singleton types append (different values)
+    expect(result.needs.constraints).toHaveLength(2);
+  });
+
   it('appends new declared_wants', () => {
     const result = mergeProfile(MINIMAL_READY_PROFILE, {
       goals: {

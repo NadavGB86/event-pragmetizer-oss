@@ -40,8 +40,13 @@ function mergeArrayField<T>(existing: T[] | undefined, incoming: T[] | undefined
   return merged;
 }
 
+/** Constraint types where only one value makes sense (latest wins) */
+const SINGLETON_CONSTRAINT_TYPES: ReadonlySet<string> = new Set(['budget', 'time']);
+
 /**
- * Specifically merges constraints, deduping by matching type AND value.
+ * Merges constraints. For singleton types (budget, time), the latest value replaces
+ * the previous one. For other types (logistics, geographic, social), deduplicates by
+ * matching both type AND value.
  */
 function mergeConstraints(existing: Constraint[], incoming: Constraint[]): Constraint[] {
     const safeExisting = existing || [];
@@ -49,10 +54,20 @@ function mergeConstraints(existing: Constraint[], incoming: Constraint[]): Const
     const merged = [...safeExisting];
 
     for (const item of safeIncoming) {
-        // Check if a constraint with same type and value exists
-        const exists = merged.some(e => e.type === item.type && e.value === item.value);
-        if (!exists) {
-            merged.push(item);
+        if (SINGLETON_CONSTRAINT_TYPES.has(item.type)) {
+            // Replace: remove any existing constraint of this type, then add the new one
+            const idx = merged.findIndex(e => e.type === item.type);
+            if (idx !== -1) {
+                merged[idx] = item;
+            } else {
+                merged.push(item);
+            }
+        } else {
+            // Append with dedup: only add if exact (type, value) pair doesn't exist
+            const exists = merged.some(e => e.type === item.type && e.value === item.value);
+            if (!exists) {
+                merged.push(item);
+            }
         }
     }
     return merged;

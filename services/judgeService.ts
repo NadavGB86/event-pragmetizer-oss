@@ -145,7 +145,8 @@ export const evaluatePlan = async (plan: ScoredPlan, profile: UserProfile): Prom
          }
        });
        usedGrounding = true;
-     } catch {
+     } catch (groundingErr) {
+       console.warn("Hard Judge grounding failed, falling back to JSON mode:", groundingErr);
        // Fallback: no grounding, use JSON mode
        response = await callGemini({
          model: model,
@@ -210,7 +211,8 @@ export const softEvaluatePlan = async (plan: ScoredPlan, profile: UserProfile): 
           temperature: 0.3,
         }
       });
-    } catch {
+    } catch (groundingErr) {
+      console.warn("Soft Judge grounding failed, falling back to JSON mode:", groundingErr);
       // Fallback: no grounding
       response = await callGemini({
         model: model,
@@ -236,10 +238,11 @@ export const softEvaluatePlan = async (plan: ScoredPlan, profile: UserProfile): 
     return verdict;
 
   } catch (error) {
-    console.error("Soft Judge Error", error);
+    console.error("Soft Judge Error — both grounding and JSON fallback failed:", error);
+    const errMsg = error instanceof Error ? error.message : String(error);
     return {
       score: 50,
-      summary: "Could not complete advisory review. Plan may still be valid.",
+      summary: `Could not complete advisory review (${errMsg}). Plan may still be valid.`,
       suggestions: [],
       grounding_notes: [],
     };

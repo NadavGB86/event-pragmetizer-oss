@@ -1,5 +1,24 @@
 # Changelog — Event Pragmetizer OSS
 
+## 3.0.1 (2026-02-11)
+
+Bug fixes and observability improvements from post-v3.0.0 testing.
+
+### Bug Fixes
+- **Budget merge fix** — changing budget (e.g., $5K to $8K) now replaces the old value instead of showing both. Singleton constraint types (budget, time) use replace semantics; other types (logistics, geographic, social) still append with dedup.
+- **Soft judge error surfacing** — error message now includes the actual failure reason instead of a generic "Could not complete advisory review" message.
+
+### UI
+- **Model indicator badge** — header now shows a small pill indicating current mode: "Free / Flash" (green) or "Full / Pro" (amber). Visible on both desktop and mobile.
+
+### Observability
+- **Judge grounding fallback logging** — both hard and soft judges now log a warning with the actual error when grounding fails and falls back to JSON mode.
+
+### Testing
+- **86 tests passing** (was 83) — 3 new tests for singleton constraint merge behavior.
+
+---
+
 ## 3.0.0 (2026-02-11)
 
 Architecture convergence release. Unifies the app so it behaves identically across local dev, Vercel, and self-hosted deployments. Introduces user-configurable usage modes.

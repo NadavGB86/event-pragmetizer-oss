@@ -107,7 +107,7 @@ npm run dev          # Start dev server (port 5175)
 npm run build        # Production build
 npm run typecheck    # Type-check
 npm run lint         # ESLint
-npm run test         # Run test suite (83 tests)
+npm run test         # Run test suite (86 tests)
 npm run test:watch   # Watch mode
 npm run format       # Prettier
 ```

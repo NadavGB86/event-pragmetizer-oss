@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { AppPhase } from '../types';
 import { useAuth } from '../context/AuthContext';
+import { getUserUsageMode } from '../services/proxyClient';
 import {
   CalendarCheck, Trash2, Download, Upload,
   Undo2, Redo2, Cloud, CloudDownload, LogIn, LogOut,
@@ -65,6 +66,10 @@ const AuthAwareHeader: React.FC<AuthAwareHeaderProps> = ({
         {/* Mobile phase indicator */}
         <span className="md:hidden text-[11px] font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
           {phase === AppPhase.INTAKE ? 'Profile' : phase === AppPhase.MATCHING ? 'Match' : phase === AppPhase.EXECUTION ? 'Refine' : 'Final'}
+        </span>
+        {/* Model indicator badge */}
+        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${getUserUsageMode() === 'full' ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'}`}>
+          {getUserUsageMode() === 'full' ? 'Full \u00b7 Pro' : 'Free \u00b7 Flash'}
         </span>
       </div>
 
