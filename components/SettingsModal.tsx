@@ -102,7 +102,37 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onKeyCha
               </button>
             </div>
           ) : (
-            <p className="text-xs text-slate-400">No API key configured. Return to setup to add one.</p>
+            <div className="space-y-2">
+              <p className="text-xs text-slate-500 mb-2">
+                Enter your Gemini API key to start using the app.{' '}
+                <a
+                  href="https://aistudio.google.com/apikey"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-indigo-600 underline inline-flex items-center gap-0.5"
+                >
+                  Get a free key <ExternalLink size={10} />
+                </a>
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="password"
+                  value={keyInput}
+                  onChange={(e) => setKeyInput(e.target.value)}
+                  placeholder="Paste your key (AIzaSy...)"
+                  className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono"
+                  onKeyDown={(e) => e.key === 'Enter' && handleSaveKey()}
+                />
+                <button
+                  onClick={handleSaveKey}
+                  disabled={!keyInput.trim()}
+                  className="px-3 py-2 bg-indigo-600 text-white text-xs font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Save
+                </button>
+              </div>
+              <p className="text-[11px] text-slate-400">Stored locally in your browser. Never sent to any server.</p>
+            </div>
           )}
         </section>
 

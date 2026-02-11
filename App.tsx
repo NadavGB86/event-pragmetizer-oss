@@ -23,7 +23,7 @@ const FinalItineraryView = React.lazy(() => import('./components/FinalItineraryV
 const SettingsModal = React.lazy(() => import('./components/SettingsModal'));
 const LoginModal = React.lazy(() => import('./components/auth/LoginModal'));
 const CloudLoadModal = React.lazy(() => import('./components/persistence/CloudLoadModal'));
-import { Sparkles, KeyRound, ExternalLink, BrainCircuit, X, Zap, MessageCircle, Search } from 'lucide-react';
+import { Sparkles, ExternalLink, BrainCircuit, X, Zap, MessageCircle, Search, CalendarCheck, ArrowRight, Eye, Shield, ListChecks } from 'lucide-react';
 
 const LazyFallback = () => (
   <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50">
@@ -87,6 +87,7 @@ const App: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false); // Mobile sidebar drawer
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [hasKey, setHasKey] = useState(() => hasGeminiAccess());
+  const [previewMode, setPreviewMode] = useState(false);
   const [usageMode, setUsageMode] = useState<UsageMode>(() => getUserUsageMode());
   const [guidanceMode, setGuidanceMode] = useState<GuidanceMode | null>(() => {
     try {
@@ -237,6 +238,12 @@ const App: React.FC = () => {
   // --- Handlers ---
 
   const handleSendMessage = async (text: string) => {
+    // Preview mode guard — prompt for API key if not set
+    if (!hasGeminiAccess()) {
+      setIsSettingsOpen(true);
+      return;
+    }
+
     // Optimistic UI update
     const userMsg: ChatMessage = {
       id: Date.now().toString(),
@@ -272,6 +279,12 @@ const App: React.FC = () => {
   };
 
   const handleGeneratePlans = async () => {
+    // Preview mode guard — prompt for API key if not set
+    if (!hasGeminiAccess()) {
+      setIsSettingsOpen(true);
+      return;
+    }
+
     // Date pivot: if no dates set, show inline prompt first
     if (userProfile.date_info.tier === 'none' && !showDatePivot) {
       setShowDatePivot(true);
@@ -355,118 +368,174 @@ const App: React.FC = () => {
   // --- Render Logic ---
 
   // API key check — show setup screen if no Gemini access method is available
-  if (!hasKey) {
+  // Preview mode allows users to explore the app UI before entering a key
+  if (!hasKey && !previewMode) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 p-6">
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 max-w-lg w-full">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2.5 bg-amber-100 rounded-xl">
-              <KeyRound className="text-amber-600" size={24} />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-slate-800">Welcome to Event Pragmetizer</h1>
-              <p className="text-sm text-slate-500">API key required to get started</p>
-            </div>
-          </div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex flex-col">
+        {/* Mini header — branding continuity */}
+        <div className="h-12 bg-white/80 backdrop-blur border-b border-slate-200 flex items-center px-4 shrink-0">
+          <CalendarCheck className="w-5 h-5 text-indigo-600 mr-2" />
+          <span className="font-bold text-slate-800 text-sm tracking-tight">Event Pragmetizer</span>
+        </div>
 
-          <div className="space-y-5 text-sm text-slate-600">
-            {/* Step 1: API Key */}
-            <div>
-              <p className="mb-2">This app uses the Google Gemini API. You need your own API key:</p>
-              <ol className="list-decimal list-inside space-y-2 pl-1">
-                <li>
-                  <a
-                    href="https://aistudio.google.com/apikey"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-indigo-600 hover:text-indigo-800 underline inline-flex items-center gap-1"
-                  >
-                    Get a Gemini API key <ExternalLink size={12} />
-                  </a>
-                </li>
-                <li>Paste it below:</li>
-              </ol>
-              <div className="flex gap-2 mt-3">
-                <input
-                  type="password"
-                  value={apiKeyInput}
-                  onChange={(e) => setApiKeyInput(e.target.value)}
-                  placeholder="AIzaSy..."
-                  className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono"
-                  onKeyDown={(e) => e.key === 'Enter' && handleSaveApiKey()}
-                />
-                <button
-                  onClick={handleSaveApiKey}
-                  disabled={!apiKeyInput.trim()}
-                  className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  Save
-                </button>
+        <div className="flex-1 flex items-center justify-center p-4 md:p-6">
+          <div className="max-w-lg w-full space-y-6">
+
+            {/* Hero — what is this app? */}
+            <div className="text-center">
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-800 mb-2">Plan any event with AI</h1>
+              <p className="text-sm md:text-base text-slate-500 max-w-md mx-auto">
+                Describe your event in plain words — guests, budget, vibe — and get ready-to-use plans in minutes.
+              </p>
+            </div>
+
+            {/* How it works — 4 steps visual */}
+            <div className="flex items-center justify-center gap-2 md:gap-3 text-xs text-slate-500 flex-wrap">
+              <div className="flex items-center gap-1">
+                <MessageCircle size={14} className="text-indigo-500" />
+                <span>Chat</span>
               </div>
-              <p className="text-xs text-slate-400 mt-2">Your key is stored locally in your browser. It is never sent to our servers.</p>
-            </div>
-
-            {/* Step 2: Usage Mode */}
-            <div className="border-t border-slate-200 pt-4">
-              <p className="font-medium text-slate-700 mb-3">Choose your usage mode:</p>
-              <div className="space-y-2">
-                <label
-                  className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${usageMode === 'free' ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'}`}
-                >
-                  <input
-                    type="radio"
-                    name="usageMode"
-                    checked={usageMode === 'free'}
-                    onChange={() => handleUsageModeChange('free')}
-                    className="mt-0.5 accent-indigo-600"
-                  />
-                  <div>
-                    <span className="font-medium text-slate-800">Free</span>
-                    <span className="ml-2 text-xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">$0</span>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Uses Flash model for all steps. No billing account needed. Rate-limited (~250 requests/day).
-                    </p>
-                  </div>
-                </label>
-                <label
-                  className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${usageMode === 'full' ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'}`}
-                >
-                  <input
-                    type="radio"
-                    name="usageMode"
-                    checked={usageMode === 'full'}
-                    onChange={() => handleUsageModeChange('full')}
-                    className="mt-0.5 accent-indigo-600"
-                  />
-                  <div>
-                    <span className="font-medium text-slate-800">Full</span>
-                    <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">pay-per-use</span>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Uses Pro model for plan generation and evaluation (higher quality). Requires a <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline">billing-enabled key</a>.
-                    </p>
-                  </div>
-                </label>
+              <ArrowRight size={12} className="text-slate-300" />
+              <div className="flex items-center gap-1">
+                <ListChecks size={14} className="text-indigo-500" />
+                <span>Plans</span>
+              </div>
+              <ArrowRight size={12} className="text-slate-300" />
+              <div className="flex items-center gap-1">
+                <Shield size={14} className="text-indigo-500" />
+                <span>Verify</span>
+              </div>
+              <ArrowRight size={12} className="text-slate-300" />
+              <div className="flex items-center gap-1">
+                <CalendarCheck size={14} className="text-emerald-500" />
+                <span>Itinerary</span>
               </div>
             </div>
 
-            {/* Pricing & Privacy Info */}
-            <div className="bg-slate-50 rounded-lg px-3 py-2.5 border border-slate-200 text-xs text-slate-500 space-y-1.5">
-              <p>
-                <strong>Pricing:</strong> Without billing, Flash is genuinely free (rate-limited). With billing enabled, Flash costs ~$0.50/M input tokens and Pro costs ~$2/M input tokens. See <a href="https://ai.google.dev/gemini-api/docs/pricing" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline">Google's pricing</a>.
-              </p>
-              <p>
-                <strong>Privacy:</strong> {usageMode === 'free'
-                  ? 'On the free tier, Google may use your prompts to improve their AI models.'
-                  : 'With a billing-enabled key, Google does not use your data for model training.'}
-              </p>
+            {/* Setup card */}
+            <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 md:p-8">
+              <div className="space-y-5 text-sm text-slate-600">
+
+                {/* Step 1: API Key */}
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold shrink-0">1</span>
+                    <span className="font-semibold text-slate-800">Get your free API key</span>
+                  </div>
+                  <p className="text-slate-500 text-xs mb-2 ml-8">
+                    This app runs on Google Gemini AI. You need your own key (free, takes 30 seconds):
+                  </p>
+                  <div className="ml-8">
+                    <a
+                      href="https://aistudio.google.com/apikey"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors mb-3"
+                    >
+                      Open Google AI Studio <ExternalLink size={12} />
+                    </a>
+                    <div className="flex gap-2">
+                      <input
+                        type="password"
+                        value={apiKeyInput}
+                        onChange={(e) => setApiKeyInput(e.target.value)}
+                        placeholder="Paste your key here (AIzaSy...)"
+                        className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono"
+                        onKeyDown={(e) => e.key === 'Enter' && handleSaveApiKey()}
+                      />
+                      <button
+                        onClick={handleSaveApiKey}
+                        disabled={!apiKeyInput.trim()}
+                        className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        Save
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-1.5">Stored locally in your browser. Never sent to any server.</p>
+                  </div>
+                </div>
+
+                {/* Step 2: Usage Mode */}
+                <div className="border-t border-slate-100 pt-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold shrink-0">2</span>
+                    <span className="font-semibold text-slate-800">Choose usage mode</span>
+                  </div>
+                  <div className="space-y-2 ml-8">
+                    <label
+                      className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${usageMode === 'free' ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'}`}
+                    >
+                      <input
+                        type="radio"
+                        name="usageMode"
+                        checked={usageMode === 'free'}
+                        onChange={() => handleUsageModeChange('free')}
+                        className="mt-0.5 accent-indigo-600"
+                      />
+                      <div>
+                        <span className="font-medium text-slate-800">Free</span>
+                        <span className="ml-2 text-xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">$0</span>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Uses Gemini Flash for all steps. No billing needed. Rate-limited (~250 requests/day).
+                        </p>
+                      </div>
+                    </label>
+                    <label
+                      className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${usageMode === 'full' ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'}`}
+                    >
+                      <input
+                        type="radio"
+                        name="usageMode"
+                        checked={usageMode === 'full'}
+                        onChange={() => handleUsageModeChange('full')}
+                        className="mt-0.5 accent-indigo-600"
+                      />
+                      <div>
+                        <span className="font-medium text-slate-800">Full</span>
+                        <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">pay-per-use</span>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Uses Gemini Pro for plans and evaluation. Requires a{' '}
+                          <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline">billing-enabled key</a>.
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Pricing & Privacy */}
+                <div className="bg-slate-50 rounded-lg px-3 py-2.5 border border-slate-200 text-[11px] text-slate-500 space-y-1">
+                  <p>
+                    <strong>Pricing:</strong> Without billing, Flash is free (rate-limited). With billing, Flash ~$0.50/M input, Pro ~$2/M input.{' '}
+                    <a href="https://ai.google.dev/gemini-api/docs/pricing" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline">Details</a>
+                  </p>
+                  <p>
+                    <strong>Privacy:</strong> {usageMode === 'free'
+                      ? 'Free tier: Google may use prompts to improve models.'
+                      : 'Paid tier: Google does not use your data for training.'}
+                  </p>
+                </div>
+
+                {/* Developer note */}
+                <details className="text-xs text-slate-400">
+                  <summary className="cursor-pointer hover:text-slate-600">For developers</summary>
+                  <p className="mt-1.5 pl-1">
+                    Set <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-[11px]">GEMINI_API_KEY</code> in <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-[11px]">.env.local</code> for build-time injection.
+                  </p>
+                </details>
+              </div>
             </div>
 
-            {/* Developer note */}
-            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-              <p className="text-xs text-slate-500">
-                <strong>Developers:</strong> You can also set <code className="bg-slate-100 px-1 py-0.5 rounded font-mono">GEMINI_API_KEY</code> in <code className="bg-slate-100 px-1 py-0.5 rounded font-mono">.env.local</code> instead.
-              </p>
+            {/* Explore without key */}
+            <div className="text-center">
+              <button
+                onClick={() => setPreviewMode(true)}
+                className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-indigo-600 transition-colors"
+              >
+                <Eye size={14} />
+                Just looking? Explore the app first
+              </button>
             </div>
+
           </div>
         </div>
       </div>
@@ -558,6 +627,21 @@ const App: React.FC = () => {
           <>
             {/* Chat Column */}
             <div className="flex-1 flex flex-col relative z-0">
+               {/* Preview mode banner — no API key yet */}
+               {previewMode && !hasKey && (
+                 <div className="bg-amber-50 border-b border-amber-200 px-4 py-2.5 flex items-center justify-between gap-3 shrink-0">
+                   <p className="text-xs text-amber-800">
+                     <strong>Preview mode</strong> — add your API key to start chatting.
+                   </p>
+                   <button
+                     onClick={() => setIsSettingsOpen(true)}
+                     className="text-xs font-medium text-indigo-600 hover:text-indigo-800 whitespace-nowrap transition-colors"
+                   >
+                     Add key
+                   </button>
+                 </div>
+               )}
+
                <ChatInterface
                  messages={messages}
                  onSendMessage={handleSendMessage}

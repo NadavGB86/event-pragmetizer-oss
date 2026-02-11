@@ -59,16 +59,16 @@ const AuthAwareHeader: React.FC<AuthAwareHeaderProps> = ({
   };
 
   return (
-    <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-6 shrink-0 z-20">
-      <div className="flex items-center gap-2">
-        <CalendarCheck className="w-6 h-6 text-indigo-600" />
-        <h1 className="font-bold text-slate-800 tracking-tight text-sm md:text-base">Event Pragmetizer</h1>
+    <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-6 shrink-0 z-20 overflow-hidden">
+      <div className="flex items-center gap-1.5 md:gap-2 min-w-0 shrink">
+        <CalendarCheck className="w-5 h-5 md:w-6 md:h-6 text-indigo-600 shrink-0" />
+        <h1 className="font-bold text-slate-800 tracking-tight text-sm md:text-base truncate">Event Pragmetizer</h1>
         {/* Mobile phase indicator */}
-        <span className="md:hidden text-[11px] font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
+        <span className="md:hidden text-[11px] font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0">
           {phase === AppPhase.INTAKE ? 'Profile' : phase === AppPhase.MATCHING ? 'Match' : phase === AppPhase.EXECUTION ? 'Refine' : 'Final'}
         </span>
-        {/* Model indicator badge */}
-        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${getUserUsageMode() === 'full' ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'}`}>
+        {/* Model indicator badge — hidden on very narrow screens, visible from sm (640px) and on desktop */}
+        <span className={`hidden sm:inline-flex md:inline-flex text-[10px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap shrink-0 ${getUserUsageMode() === 'full' ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'}`}>
           {getUserUsageMode() === 'full' ? 'Full \u00b7 Pro' : 'Free \u00b7 Flash'}
         </span>
       </div>
@@ -178,7 +178,7 @@ const AuthAwareHeader: React.FC<AuthAwareHeaderProps> = ({
       </div>
 
       {/* Mobile: undo/redo + hamburger */}
-      <div className="flex md:hidden items-center gap-1">
+      <div className="flex md:hidden items-center gap-1 shrink-0">
         <button
           onClick={undo}
           disabled={!canUndo}
