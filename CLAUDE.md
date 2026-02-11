@@ -100,7 +100,7 @@ No server-side API key or env vars needed. Users enter their own Gemini API key 
 
 ## Development Priorities (OSS Roadmap)
 
-**Completed (v3.1.0):**
+**Completed (v3.2.0):**
 1. Installation & Onboarding (README, `.env.example`, one-command setup)
 2. Mobile Responsiveness (PWA manifest, responsive layout, touch-friendly)
 3. API Key Security (BYOK — key never leaves browser)
@@ -114,10 +114,10 @@ No server-side API key or env vars needed. Users enter their own Gemini API key 
 11. **Proxy removal** — direct SDK calls only, no serverless function
 12. **Guidance Modes** — Quick/Guided/Deep analyst modes with scope disclosure and LLM readiness signaling
 13. **Model indicator badge** — shows current mode (Free/Flash or Full/Pro) in header
+14. **Code splitting** — React.lazy + vendor chunks, largest chunk 259KB (was 756KB)
+15. **PWA icons** — 192px + 512px calendar-check icons on indigo background
 
-**Pending:**
-- PWA icons (192px and 512px)
-- Code splitting (bundle >500KB)
+**All planned features complete.** Remaining items are maintenance-level (Supabase instance, budget regex).
 
 ---
 
@@ -179,4 +179,4 @@ Sibling projects:
 
 ---
 
-*Created: 2026-02-10 | Updated: 2026-02-11 (v3.1.0)*
+*Created: 2026-02-10 | Updated: 2026-02-11 (v3.2.0)*

@@ -1,5 +1,22 @@
 # Changelog — Event Pragmetizer OSS
 
+## 3.2.0 (2026-02-11)
+
+Performance and PWA improvements. All planned features complete.
+
+### Code Splitting
+- **React.lazy()** for phase components (PlanComparison, ExecutionView, FinalItineraryView) and modals (SettingsModal, LoginModal, CloudLoadModal)
+- **Vendor chunk splitting** — @google/genai, @supabase, react, lucide-react split into separate chunks
+- **Largest chunk: 259KB** (was 756KB single bundle). No Vite size warnings.
+- 14 total chunks with granular loading — only Phase 1 code loads at startup
+
+### PWA Icons
+- **icon-192.png** and **icon-512.png** — white calendar-check on indigo (#4F46E5) background
+- Generator script at `scripts/generate-icons.mjs` (no external dependencies)
+- PWA install now shows proper branded icon
+
+---
+
 ## 3.1.0 (2026-02-11)
 
 Analyst guidance modes + bug fixes from post-v3.0.0 testing.
