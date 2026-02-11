@@ -319,7 +319,7 @@ const App: React.FC = () => {
             </div>
           </div>
           <div className="space-y-4 text-sm text-slate-600">
-            <p>This app uses the Google Gemini API. You need your own (free) API key:</p>
+            <p>This app uses the Google Gemini API. You need your own API key:</p>
             <ol className="list-decimal list-inside space-y-2 pl-1">
               <li>
                 <a
@@ -328,11 +328,14 @@ const App: React.FC = () => {
                   rel="noopener noreferrer"
                   className="text-indigo-600 hover:text-indigo-800 underline inline-flex items-center gap-1"
                 >
-                  Get a free Gemini API key <ExternalLink size={12} />
+                  Get a Gemini API key <ExternalLink size={12} />
                 </a>
               </li>
               <li>Paste it below:</li>
             </ol>
+            <p className="text-xs text-slate-500 bg-slate-50 rounded-lg px-3 py-2 border border-slate-200">
+              Chatting is free (Flash model). Plan generation and evaluation use the Pro model, which has a small per-use cost. See <a href="https://ai.google.dev/gemini-api/docs/pricing" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline">Google's pricing</a>.
+            </p>
             <div className="flex gap-2">
               <input
                 type="password"
