@@ -1,5 +1,37 @@
 # Changelog — Event Pragmetizer OSS
 
+## 2.1.0 (2026-02-10)
+
+BYOK (Bring Your Own Key) release. Users provide their own Gemini API key — no server-side key needed.
+
+### BYOK & API Key Security
+- **BYOK setup screen** — visitors paste their own Gemini API key on first visit
+- **Key stored in browser only** (`localStorage`) — never sent to any server
+- **Triple-mode key chain:** BYOK key > build-time key (.env.local) > Vercel proxy > error
+- **Honest pricing notice** — setup screen explains Flash is free, Pro is paid, with link to Google's pricing
+
+### Vercel Deployment
+- **Serverless proxy** (`api/gemini.ts`) — Vercel Serverless Function for optional server-side key mode
+- **504 timeout fix** — switched from Edge (25s limit) to Serverless (60s limit) for Pro model generation
+- **Security:** `vite.config.ts` gates key exposure with `VITE_USE_PROXY` to prevent key leak in proxy-mode builds
+- **Vercel config** (`vercel.json`) — SPA rewrites + API routing
+
+### Infrastructure
+- **Unified Gemini caller** (`services/proxyClient.ts`) — all LLM calls route through `callGemini()`
+- **13 proxyClient tests** (79 total) — SDK passthrough, BYOK helpers, proxy flag
+- **Repo made public** on GitHub
+
+### Post-v2.0.0 UX Fixes
+- Match badge no longer covers plan title
+- Mobile phase indicator pill next to app title
+- Synthesis loading text centered on mobile
+- Judge rejection clears on plan re-selection + "Try Different Plan" button
+- Generator prompt enforces non-domestic destinations for "abroad"
+- Phone sign-in: OTP code instructions instead of "magic link" wording
+- Non-localhost warning for phone sign-in
+
+---
+
 ## 2.0.0 (2026-02-10)
 
 The first production-grade release. Transforms the M3.0 prototype into an installable, testable, mobile-friendly open-source application.
@@ -43,8 +75,8 @@ The first production-grade release. Transforms the M3.0 prototype into an instal
 - **Roadmap** — updated with completion status
 - **Version bump** — 1.0.0 → 2.0.0
 
-### Known Limitations
-- API key is still in the client bundle — backend proxy (Phase 2.3) deferred pending deployment platform decision
+### Known Limitations (resolved in v2.1.0)
+- ~~API key in client bundle~~ — resolved: BYOK + Vercel proxy
 - PWA icons are placeholders (192px and 512px PNGs not yet created)
 - Supabase degradation bug under investigation (diagnostic logging added)
 

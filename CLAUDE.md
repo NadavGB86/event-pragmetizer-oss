@@ -42,8 +42,9 @@ Transforms unstructured natural language descriptions of event needs into feasib
 | `App.tsx` | Main entry, state management (via `useUndoRedo`), phase routing |
 | `types.ts` | **Centralized types.** All interfaces live here. |
 | `constants.ts` | `MODEL_NAME`, `INITIAL_USER_PROFILE`, system instructions |
-| `services/geminiService.ts` | Analyst, Generator, Refiner LLM calls |
-| `services/judgeService.ts` | Hard + soft plan evaluation (LLM + Google Search grounding) |
+| `services/proxyClient.ts` | **Unified Gemini caller** — BYOK, SDK, and proxy modes + key helpers |
+| `services/geminiService.ts` | Analyst, Generator, Refiner LLM calls (via `callGemini`) |
+| `services/judgeService.ts` | Hard + soft plan evaluation (via `callGemini` + Google Search grounding) |
 | `services/supabaseClient.ts` | Supabase client singleton |
 | `services/authService.ts` | Magic link auth (OTP send/verify/logout) |
 | `services/storageService.ts` | Cloud CRUD (save/get/load/delete plans) |
@@ -62,10 +63,12 @@ Transforms unstructured natural language descriptions of event needs into feasib
 
 1. **SDK:** `@google/genai` (v1.40.0). **NEVER** swap to `@google/generative-ai` (different, incompatible package).
 2. **API pattern:** `new GoogleGenAI({ apiKey })`, `ai.models.generateContent({model, contents, config})`
-3. **Models:** `MODEL_NAME` (flash) and `PRO_MODEL_NAME` (pro) in `constants.ts`. Change there only.
-4. **API key chain:** `.env.local` (`GEMINI_API_KEY`) -> `vite.config.ts` (`define` block) -> `process.env.API_KEY` -> services
-5. **Do NOT modify `vite.config.ts` define block** unless absolutely necessary.
-6. **Dual-mode architecture:** `services/proxyClient.ts` detects `VITE_USE_PROXY=true` for Vercel proxy mode, falls back to SDK for local dev. All Gemini calls go through `callGemini()`.
+3. **Models:** `MODEL_NAME` (flash, free tier) and `PRO_MODEL_NAME` (pro, paid) in `constants.ts`. Change there only.
+4. **All Gemini calls** go through `callGemini()` in `services/proxyClient.ts`.
+5. **BYOK (Bring Your Own Key):** Users paste their Gemini API key in the setup screen. Stored in `localStorage('ep_gemini_api_key')`. Key never leaves the browser.
+6. **API key priority:** BYOK key (localStorage) > build-time key (.env.local) > Vercel proxy > error.
+7. **BYOK helpers:** `getUserApiKey()`, `setUserApiKey()`, `hasGeminiAccess()` in `proxyClient.ts`.
+8. **Do NOT modify `vite.config.ts` define block** unless absolutely necessary. The `loadEnv` with empty prefix reads ALL env vars — must gate with `VITE_USE_PROXY` to prevent key leak.
 
 ---
 
@@ -83,22 +86,29 @@ npm run preview      # Preview dist/
 GEMINI_API_KEY=your_key_here
 VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-
-# Set on Vercel only (not needed locally):
-# VITE_USE_PROXY=true
 ```
+
+### For Deployed Users (Vercel)
+No server-side API key needed. Users enter their own Gemini API key via the in-app setup screen (BYOK).
 
 ---
 
 ## Development Priorities (OSS Roadmap)
 
-1. **Installation & Onboarding:** Clear README, `.env.example`, one-command setup
-2. **Mobile Responsiveness:** PWA manifest, responsive layout, touch-friendly
-3. **API Key Security:** Backend proxy or serverless function (remove client-side key)
-4. **Tailwind Compilation:** Move from CDN to compiled Tailwind for production
-5. **Testing:** Unit tests for utils, integration tests for services
-6. **CI/CD:** GitHub Actions for build, lint, test
-7. **Community:** LICENSE, CONTRIBUTING.md, issue templates
+**Completed (v2.1.0):**
+1. Installation & Onboarding (README, `.env.example`, one-command setup)
+2. Mobile Responsiveness (PWA manifest, responsive layout, touch-friendly)
+3. API Key Security (BYOK + Vercel proxy infrastructure)
+4. Tailwind Compilation (CDN → compiled PostCSS pipeline)
+5. Testing (79 tests — 66 utils + 13 proxyClient)
+6. CI/CD (GitHub Actions — build, lint, test)
+7. Community (LICENSE, CONTRIBUTING.md, issue/PR templates)
+
+**Pending:**
+- Free-tier model toggle (Flash-only mode for zero-cost usage)
+- PWA icons (192px and 512px)
+- Supabase on Vercel (env vars, dedicated vs shared instance, redirect URLs)
+- Code splitting (bundle >500KB)
 
 ---
 
