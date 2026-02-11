@@ -60,20 +60,19 @@ The app will be available at `http://localhost:5175`.
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `GEMINI_API_KEY` | Yes | Google Gemini API key |
-| `VITE_SUPABASE_URL` | No | Supabase project URL (for cloud save) |
-| `VITE_SUPABASE_ANON_KEY` | No | Supabase anonymous key (for auth) |
-| `VITE_USE_PROXY` | No | Set to `true` on Vercel (enables server-side API key proxy) |
+| `GEMINI_API_KEY` | No | Google Gemini API key (dev convenience — users enter their own via BYOK) |
+| `VITE_SUPABASE_URL` | No | Supabase project URL (enables optional cloud sync) |
+| `VITE_SUPABASE_ANON_KEY` | No | Supabase anonymous key (enables optional cloud sync) |
 
-Without Supabase, the app works fully with localStorage-based persistence.
+The app works fully with browser-only storage (localStorage + JSON export/import). No environment variables are required — users enter their own API key via the in-app setup screen (BYOK).
 
 ## Tech Stack
 
 - **React 19** + TypeScript
 - **Vite** (build tool)
 - **Tailwind CSS v3** (compiled, with typography plugin)
-- **Google Gemini API** (`@google/genai`) — Flash for chat, Pro for generation/judging
-- **Supabase** (optional — auth + cloud persistence)
+- **Google Gemini API** (`@google/genai`) — Flash for chat, Pro for generation/judging (user-configurable)
+- **Supabase** (optional — cloud sync for multi-device access)
 - **Vitest** (testing)
 - **ESLint 9** + **Prettier** (code quality)
 - **Lucide React** (icons)
@@ -108,27 +107,26 @@ npm run dev          # Start dev server (port 5175)
 npm run build        # Production build
 npm run typecheck    # Type-check
 npm run lint         # ESLint
-npm run test         # Run test suite (66 tests)
+npm run test         # Run test suite (83 tests)
 npm run test:watch   # Watch mode
 npm run format       # Prettier
 ```
 
 ## Deploy to Vercel
 
-The app can be deployed to [Vercel](https://vercel.com) with the API key stored server-side (never exposed to the browser).
+The app can be deployed to [Vercel](https://vercel.com) with zero configuration — no server-side API key needed.
 
 1. Fork this repository
 2. Import the project in Vercel
-3. Set environment variables:
-   | Variable | Value |
-   |----------|-------|
-   | `GEMINI_API_KEY` | Your Google Gemini API key |
-   | `VITE_USE_PROXY` | `true` |
-   | `VITE_SUPABASE_URL` | *(optional)* Your Supabase project URL |
-   | `VITE_SUPABASE_ANON_KEY` | *(optional)* Your Supabase anon key |
-4. Deploy
+3. Deploy
 
-The edge proxy (`/api/gemini`) forwards requests to the Gemini API with the key added server-side. Local development continues to use the SDK directly — no Vercel CLI or proxy needed.
+That's it. Users enter their own Gemini API key via the in-app setup screen (BYOK). All data stays in the user's browser.
+
+**Optional:** To enable cloud sync (save/load plans across devices), set these environment variables in Vercel:
+| Variable | Value |
+|----------|-------|
+| `VITE_SUPABASE_URL` | Your Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Your Supabase anon key |
 
 ## Contributing
 
