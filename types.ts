@@ -183,6 +183,9 @@ export enum AppPhase {
   FINAL_EXECUTION = 'FINAL_EXECUTION' // Final Immutable View
 }
 
+// Guidance Mode for Analyst Chat
+export type GuidanceMode = 'quick' | 'guided' | 'deep';
+
 // Auth & Cloud Persistence (Phase 4)
 export interface AuthUser {
   id: string;

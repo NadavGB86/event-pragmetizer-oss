@@ -1,59 +1,76 @@
 import { callGemini, getModelForPhase } from './proxyClient';
 import { GenerateContentResponse } from "@google/genai";
-import { UserProfile, CandidatePlan, ChatMessage } from "../types";
-import { SYSTEM_INSTRUCTION_ANALYST, SYSTEM_INSTRUCTION_GENERATOR } from "../constants";
+import { UserProfile, CandidatePlan, ChatMessage, GuidanceMode } from "../types";
+import { buildAnalystInstruction, SYSTEM_INSTRUCTION_GENERATOR } from "../constants";
 import { getCurrencySymbol } from "../utils/currency";
 
 
+/** Parsed analyst response with profile update and readiness signal */
+interface AnalystParseResult {
+  text: string;
+  profileUpdate: Partial<UserProfile> | null;
+  readyToGenerate: boolean;
+  stillNeeded: string[];
+}
+
 /**
  * Parses the response text to separate the conversational part from the hidden JSON block.
+ * Extracts readiness signal (ready_to_generate, still_needed) from the JSON if present.
  */
-function parseAnalystResponse(text: string): { text: string; profileUpdate: Partial<UserProfile> | null } {
+function parseAnalystResponse(text: string): AnalystParseResult {
   const jsonRegex = /```json\s*([\s\S]*?)\s*```/;
   const match = text.match(jsonRegex);
 
   if (match) {
     try {
       const jsonStr = match[1];
-      const updatedProfile = JSON.parse(jsonStr);
+      const parsed = JSON.parse(jsonStr);
       // Remove the JSON block from the message shown to user
       const message = text.replace(jsonRegex, '').trim();
-      return { text: message, profileUpdate: updatedProfile };
+      // Extract readiness fields before passing as profile update
+      const readyToGenerate = parsed.ready_to_generate === true;
+      const stillNeeded: string[] = Array.isArray(parsed.still_needed) ? parsed.still_needed : [];
+      // Remove readiness fields from profile update (they're not part of UserProfile)
+      delete parsed.ready_to_generate;
+      delete parsed.still_needed;
+      return { text: message, profileUpdate: parsed, readyToGenerate, stillNeeded };
     } catch (e) {
       console.error("Failed to parse JSON from LLM response", e);
-      return { text: text, profileUpdate: null };
+      return { text: text, profileUpdate: null, readyToGenerate: false, stillNeeded: [] };
     }
   }
 
-  return { text: text, profileUpdate: null };
+  return { text: text, profileUpdate: null, readyToGenerate: false, stillNeeded: [] };
 }
 
 export const sendMessageToAnalyst = async (
   history: ChatMessage[],
-  currentProfile: UserProfile
-): Promise<{ text: string; profileUpdate: Partial<UserProfile> | null }> => {
-  
+  currentProfile: UserProfile,
+  guidanceMode: GuidanceMode = 'guided'
+): Promise<AnalystParseResult> => {
+
   try {
     const model = getModelForPhase('chat');
 
     // Construct context-aware prompt
     const chatHistoryText = history.map(h => `${h.role.toUpperCase()}: ${h.content}`).join('\n');
     const profileContext = JSON.stringify(currentProfile);
-    
+
     const prompt = `
     CURRENT EXTRACTED PROFILE: ${profileContext}
-    
+
     CONVERSATION HISTORY:
     ${chatHistoryText}
-    
+
     Respond to the last user message. Remember to append the JSON block if you detect new constraints or goals.
+    Include ready_to_generate and still_needed in the JSON block.
     `;
 
     const response: GenerateContentResponse = await callGemini({
       model: model,
       contents: prompt,
       config: {
-        systemInstruction: SYSTEM_INSTRUCTION_ANALYST,
+        systemInstruction: buildAnalystInstruction(guidanceMode),
         temperature: 0.7,
       },
     });
@@ -63,7 +80,7 @@ export const sendMessageToAnalyst = async (
 
   } catch (error) {
     console.error("Gemini API Error:", error);
-    return { text: "Connection error. Please check your API key.", profileUpdate: null };
+    return { text: "Connection error. Please check your API key.", profileUpdate: null, readyToGenerate: false, stillNeeded: [] };
   }
 };
 

@@ -1,12 +1,22 @@
 # Changelog — Event Pragmetizer OSS
 
-## 3.0.1 (2026-02-11)
+## 3.1.0 (2026-02-11)
 
-Bug fixes and observability improvements from post-v3.0.0 testing.
+Analyst guidance modes + bug fixes from post-v3.0.0 testing.
+
+### Guidance Modes
+- **Mode selector** — new screen before chat starts where users choose their preferred interview depth:
+  - **Quick** — minimal questions, fast path to plan generation
+  - **Guided** (default, recommended) — structured walkthrough of all required fields
+  - **Deep** — thorough exploration of preferences, lifestyle, and latent desires
+- **Scope disclosure** — first analyst message in each mode explains what information is needed
+- **Readiness signaling** — analyst LLM signals when the profile has enough info to generate plans (`ready_to_generate` field). UI shows green "ready" badge or amber "still needed" list.
+- **Mode-specific system prompts** — `buildAnalystInstruction(mode)` composes the analyst system prompt dynamically based on the selected mode
 
 ### Bug Fixes
 - **Budget merge fix** — changing budget (e.g., $5K to $8K) now replaces the old value instead of showing both. Singleton constraint types (budget, time) use replace semantics; other types (logistics, geographic, social) still append with dedup.
 - **Soft judge error surfacing** — error message now includes the actual failure reason instead of a generic "Could not complete advisory review" message.
+- **Reset preserves settings** — "Reset All Data" now clears session state but preserves API key and usage mode
 
 ### UI
 - **Model indicator badge** — header now shows a small pill indicating current mode: "Free / Flash" (green) or "Full / Pro" (amber). Visible on both desktop and mobile.

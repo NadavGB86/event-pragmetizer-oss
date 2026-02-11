@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AppPhase, ChatMessage, UserProfile, CandidatePlan, ScoredPlan, AppState, SoftJudgeVerdict } from './types';
+import { AppPhase, ChatMessage, UserProfile, CandidatePlan, ScoredPlan, AppState, SoftJudgeVerdict, GuidanceMode } from './types';
 import { INITIAL_USER_PROFILE } from './constants';
 import * as GeminiService from './services/geminiService';
 import { softEvaluatePlan, evaluatePlan } from './services/judgeService';
@@ -21,7 +21,7 @@ import CloudLoadModal from './components/persistence/CloudLoadModal';
 import { exportState, validateAndParseState } from './utils/persistence';
 import ErrorBoundary from './components/ErrorBoundary';
 import SettingsModal from './components/SettingsModal';
-import { Sparkles, KeyRound, ExternalLink, BrainCircuit, X } from 'lucide-react';
+import { Sparkles, KeyRound, ExternalLink, BrainCircuit, X, Zap, MessageCircle, Search } from 'lucide-react';
 
 const App: React.FC = () => {
   // --- State ---
@@ -49,12 +49,7 @@ const App: React.FC = () => {
 
         state = {
             phase: load<AppPhase>('ep_phase', AppPhase.INTAKE),
-            messages: load<ChatMessage[]>('ep_messages', [{
-                id: 'init',
-                role: 'model',
-                content: "Hi! I'm your Event Pragmetizer. I'm here to turn your vague ideas into a solid plan. What kind of event are we planning today?",
-                timestamp: 0
-            }]),
+            messages: load<ChatMessage[]>('ep_messages', []),
             userProfile: load<UserProfile>('ep_userProfile', INITIAL_USER_PROFILE),
             generatedPlans: load<ScoredPlan[]>('ep_generatedPlans', []),
             selectedPlan: load<CandidatePlan | null>('ep_selectedPlan', null),
@@ -85,6 +80,21 @@ const App: React.FC = () => {
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [hasKey, setHasKey] = useState(() => hasGeminiAccess());
   const [usageMode, setUsageMode] = useState<UsageMode>(() => getUserUsageMode());
+  const [guidanceMode, setGuidanceMode] = useState<GuidanceMode | null>(() => {
+    try {
+      const saved = localStorage.getItem('ep_guidance_mode') as GuidanceMode | null;
+      if (saved) return saved;
+      // Migration: if existing session has user messages, default to 'guided' (skip selector)
+      const v2 = localStorage.getItem('ep_app_v2');
+      if (v2) {
+        const parsed = JSON.parse(v2);
+        if (parsed.messages?.some((m: ChatMessage) => m.role === 'user')) return 'guided';
+      }
+      return null;
+    } catch { return null; }
+  });
+  const [llmReady, setLlmReady] = useState(false); // LLM signals readiness
+  const [llmStillNeeded, setLlmStillNeeded] = useState<string[]>([]);
   const { user } = useAuth();
 
   // Destructure for easier usage below (read-only)
@@ -128,9 +138,11 @@ const App: React.FC = () => {
       // Legacy backup for safety (optional, maybe skip to clean up)
   }, [state]);
 
-  // Reset Function
+  // Reset Function — clears session state but preserves API key and usage mode
   const handleReset = () => {
-      localStorage.clear();
+      localStorage.removeItem('ep_app_v2');
+      localStorage.removeItem('ep_guidance_mode');
+      // Preserve: ep_gemini_api_key, ep_usage_mode (user settings)
       globalThis.location.reload();
   };
 
@@ -194,6 +206,23 @@ const App: React.FC = () => {
     setUserUsageMode(mode);
   };
 
+  const handleSelectGuidanceMode = (mode: GuidanceMode) => {
+    setGuidanceMode(mode);
+    try { localStorage.setItem('ep_guidance_mode', mode); } catch { /* */ }
+    // Set the initial analyst message based on mode
+    const modeMessages: Record<GuidanceMode, string> = {
+      quick: "Hi! Let's get your plan started quickly. Tell me: what's the event, who's coming, and what's your budget? I'll take it from there.",
+      guided: "Hi! I'm your Event Pragmetizer. To build a great plan, I'll want to understand: **who's coming**, **your budget**, **when and where**, and **what matters most** (vibe, activities, must-haves). Just tell me in your own words and I'll organize it. What are we planning?",
+      deep: "Hi! I'm going to take a thoughtful approach to build you a really personalized plan. I'll ask some questions to understand not just what you want, but *why* — so I can find options you might not have thought of. Let's start with the basics: what kind of event are we planning, and what's the occasion?",
+    };
+    setMessages([{
+      id: 'init',
+      role: 'model',
+      content: modeMessages[mode],
+      timestamp: Date.now(),
+    }]);
+  };
+
   // Derived State
   const readiness = assessReadiness(userProfile);
 
@@ -211,13 +240,17 @@ const App: React.FC = () => {
     setMessages(updatedHistory);
     setIsProcessing(true);
 
-    // Call API
-    const result = await GeminiService.sendMessageToAnalyst(updatedHistory, userProfile);
+    // Call API with guidance mode
+    const result = await GeminiService.sendMessageToAnalyst(updatedHistory, userProfile, guidanceMode || 'guided');
 
     // Update Profile if new data extracted
     if (result.profileUpdate) {
        setUserProfile(prev => mergeProfile(prev, result.profileUpdate!));
     }
+
+    // Update LLM readiness signal
+    setLlmReady(result.readyToGenerate);
+    setLlmStillNeeded(result.stillNeeded);
 
     // Add Model Response
     const modelMsg: ChatMessage = {
@@ -463,7 +496,57 @@ const App: React.FC = () => {
       <main className="flex-1 flex overflow-hidden relative">
         
         {/* Phase 1: Intake View */}
-        {phase === AppPhase.INTAKE && (
+        {phase === AppPhase.INTAKE && !guidanceMode && (
+          /* Guidance Mode Selector — shown before chat starts */
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-50 to-indigo-50 p-6">
+            <div className="max-w-lg w-full">
+              <div className="text-center mb-8">
+                <h2 className="text-2xl font-bold text-slate-800 mb-2">How would you like to plan?</h2>
+                <p className="text-sm text-slate-500">Choose how much guidance you'd like from the assistant.</p>
+              </div>
+              <div className="space-y-3">
+                <button
+                  onClick={() => handleSelectGuidanceMode('quick')}
+                  className="w-full flex items-start gap-4 p-4 bg-white rounded-xl border border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all text-left group"
+                >
+                  <div className="p-2.5 bg-amber-100 rounded-lg group-hover:bg-amber-200 transition-colors shrink-0">
+                    <Zap className="text-amber-600" size={20} />
+                  </div>
+                  <div>
+                    <div className="font-semibold text-slate-800">Quick</div>
+                    <p className="text-sm text-slate-500 mt-0.5">I know what I want. Just get me to plan generation fast.</p>
+                  </div>
+                </button>
+                <button
+                  onClick={() => handleSelectGuidanceMode('guided')}
+                  className="w-full flex items-start gap-4 p-4 bg-white rounded-xl border-2 border-indigo-200 hover:border-indigo-400 hover:shadow-md transition-all text-left group ring-1 ring-indigo-100"
+                >
+                  <div className="p-2.5 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition-colors shrink-0">
+                    <MessageCircle className="text-indigo-600" size={20} />
+                  </div>
+                  <div>
+                    <div className="font-semibold text-slate-800">Guided <span className="text-xs font-normal text-indigo-500 ml-1">recommended</span></div>
+                    <p className="text-sm text-slate-500 mt-0.5">Walk me through it step by step. I'll share details as you ask.</p>
+                  </div>
+                </button>
+                <button
+                  onClick={() => handleSelectGuidanceMode('deep')}
+                  className="w-full flex items-start gap-4 p-4 bg-white rounded-xl border border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all text-left group"
+                >
+                  <div className="p-2.5 bg-violet-100 rounded-lg group-hover:bg-violet-200 transition-colors shrink-0">
+                    <Search className="text-violet-600" size={20} />
+                  </div>
+                  <div>
+                    <div className="font-semibold text-slate-800">Deep</div>
+                    <p className="text-sm text-slate-500 mt-0.5">Explore my preferences thoroughly. I want a really personalized plan.</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {phase === AppPhase.INTAKE && guidanceMode && (
           <>
             {/* Chat Column */}
             <div className="flex-1 flex flex-col relative z-0">
@@ -476,11 +559,18 @@ const App: React.FC = () => {
 
                {/* Floating Generate Button Area */}
                <div className="absolute bottom-20 md:bottom-24 left-1/2 -translate-x-1/2 w-full max-w-md px-4 flex flex-col items-center gap-2">
-                 {/* Readiness Feedback */}
-                 {!readiness.isReady && messages.length > 2 && (
+                 {/* Readiness Feedback — prefer LLM signal, fall back to local assessment */}
+                 {!readiness.isReady && !llmReady && messages.length > 2 && (
                     <div className="bg-amber-50 text-amber-800 text-xs px-3 py-1.5 rounded-full shadow-sm border border-amber-200 animate-fade-in">
-                      Still needed: {readiness.missingCritical.join(', ')}
+                      Still needed: {llmStillNeeded.length > 0 ? llmStillNeeded.join(', ') : readiness.missingCritical.join(', ')}
                     </div>
+                 )}
+
+                 {/* LLM ready signal */}
+                 {llmReady && readiness.isReady && (
+                   <div className="bg-emerald-50 text-emerald-700 text-xs px-3 py-1.5 rounded-full shadow-sm border border-emerald-200 animate-fade-in">
+                     Profile looks good — ready to generate plans!
+                   </div>
                  )}
 
                  {/* Date Pivot */}

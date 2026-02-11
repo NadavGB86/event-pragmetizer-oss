@@ -25,7 +25,7 @@ Transform Event Pragmetizer into a **production-grade, open-source application**
 Transforms unstructured natural language descriptions of event needs into feasible, personalized event plans.
 
 ### Core Flow
-1. **Analyst (Phase 1):** Chat-based profiling to extract needs (Adults, Kids, Budget, Vibe, Dates).
+1. **Analyst (Phase 1):** Guidance mode selector (Quick/Guided/Deep) → chat-based profiling to extract needs (Adults, Kids, Budget, Vibe, Dates). LLM signals readiness when profile is sufficient.
 2. **Generator (Phase 2):** Generates 2-3 candidate plans with different tradeoff strategies (Pro model).
 3. **Soft Judge (Phase 3a):** Advisory evaluation with Google Search grounding — auto-fires on plan select.
 4. **Hard Judge (Phase 3b):** Strict LLM-based validation with grounding. Pass/fail gate for finalization.
@@ -41,7 +41,7 @@ Transforms unstructured natural language descriptions of event needs into feasib
 |---|---|
 | `App.tsx` | Main entry, state management (via `useUndoRedo`), phase routing |
 | `types.ts` | **Centralized types.** All interfaces live here. |
-| `constants.ts` | `MODEL_NAME`, `INITIAL_USER_PROFILE`, system instructions |
+| `constants.ts` | `MODEL_NAME`, `INITIAL_USER_PROFILE`, system instructions, `buildAnalystInstruction(mode)` |
 | `services/proxyClient.ts` | **Unified Gemini caller** — BYOK + SDK mode, usage mode helpers, key helpers |
 | `services/geminiService.ts` | Analyst, Generator, Refiner LLM calls (via `callGemini`) |
 | `services/judgeService.ts` | Hard + soft plan evaluation (via `callGemini` + Google Search grounding) |
@@ -72,6 +72,8 @@ Transforms unstructured natural language descriptions of event needs into feasib
 8. **Usage mode:** `localStorage('ep_usage_mode')` — `'free'` (Flash for everything) or `'full'` (Flash for chat, Pro for plans/judges). Helpers: `getUserUsageMode()`, `setUserUsageMode()`.
 9. **BYOK helpers:** `getUserApiKey()`, `setUserApiKey()`, `hasGeminiAccess()` in `proxyClient.ts`.
 10. **No proxy:** The Vercel serverless proxy was removed in v3.0.0. All Gemini calls go direct from browser via SDK.
+11. **Guidance mode:** `localStorage('ep_guidance_mode')` — `'quick'`, `'guided'`, or `'deep'`. Controls analyst system prompt via `buildAnalystInstruction(mode)` in `constants.ts`. Selected before chat starts.
+12. **Analyst readiness signal:** LLM returns `ready_to_generate` boolean and `still_needed` array in its JSON block. Parsed by `parseAnalystResponse()` in `geminiService.ts`.
 
 ---
 
@@ -98,18 +100,20 @@ No server-side API key or env vars needed. Users enter their own Gemini API key 
 
 ## Development Priorities (OSS Roadmap)
 
-**Completed (v3.0.0):**
+**Completed (v3.1.0):**
 1. Installation & Onboarding (README, `.env.example`, one-command setup)
 2. Mobile Responsiveness (PWA manifest, responsive layout, touch-friendly)
 3. API Key Security (BYOK — key never leaves browser)
 4. Tailwind Compilation (CDN → compiled PostCSS pipeline)
-5. Testing (83 tests — 66 utils + 17 proxyClient)
+5. Testing (86 tests — 69 utils + 17 proxyClient)
 6. CI/CD (GitHub Actions — build, lint, test)
 7. Community (LICENSE, CONTRIBUTING.md, issue/PR templates)
 8. **Unified Architecture** — same code, same behavior across local dev/Vercel/self-hosted
 9. **Usage Mode Toggle** — Free (Flash-only, $0) vs Full (Pro for plans, pay-per-use)
 10. **Settings Panel** — API key management, usage mode, cloud sync status
 11. **Proxy removal** — direct SDK calls only, no serverless function
+12. **Guidance Modes** — Quick/Guided/Deep analyst modes with scope disclosure and LLM readiness signaling
+13. **Model indicator badge** — shows current mode (Free/Flash or Full/Pro) in header
 
 **Pending:**
 - PWA icons (192px and 512px)
