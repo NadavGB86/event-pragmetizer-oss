@@ -59,7 +59,7 @@ const AuthAwareHeader: React.FC<AuthAwareHeaderProps> = ({
   };
 
   return (
-    <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-6 shrink-0 z-20 overflow-hidden">
+    <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-6 shrink-0 z-20">
       <div className="flex items-center gap-1.5 md:gap-2 min-w-0 shrink">
         <CalendarCheck className="w-5 h-5 md:w-6 md:h-6 text-indigo-600 shrink-0" />
         <h1 className="font-bold text-slate-800 tracking-tight text-sm md:text-base truncate">Event Pragmetizer</h1>
