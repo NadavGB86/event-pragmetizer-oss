@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { AppPhase, ChatMessage, UserProfile, CandidatePlan, ScoredPlan, AppState, SoftJudgeVerdict, GuidanceMode } from './types';
 import { INITIAL_USER_PROFILE } from './constants';
 import * as GeminiService from './services/geminiService';
@@ -12,16 +12,24 @@ import { savePlan } from './services/storageService';
 
 import ChatInterface from './components/ChatInterface';
 import ProfileSidebar from './components/ProfileSidebar';
-import PlanComparison from './components/PlanComparison';
-import ExecutionView from './components/ExecutionView';
-import FinalItineraryView from './components/FinalItineraryView';
 import AuthAwareHeader from './components/AuthAwareHeader';
-import LoginModal from './components/auth/LoginModal';
-import CloudLoadModal from './components/persistence/CloudLoadModal';
 import { exportState, validateAndParseState } from './utils/persistence';
 import ErrorBoundary from './components/ErrorBoundary';
-import SettingsModal from './components/SettingsModal';
+
+// Lazy-loaded phase components (not needed at startup)
+const PlanComparison = React.lazy(() => import('./components/PlanComparison'));
+const ExecutionView = React.lazy(() => import('./components/ExecutionView'));
+const FinalItineraryView = React.lazy(() => import('./components/FinalItineraryView'));
+const SettingsModal = React.lazy(() => import('./components/SettingsModal'));
+const LoginModal = React.lazy(() => import('./components/auth/LoginModal'));
+const CloudLoadModal = React.lazy(() => import('./components/persistence/CloudLoadModal'));
 import { Sparkles, KeyRound, ExternalLink, BrainCircuit, X, Zap, MessageCircle, Search } from 'lucide-react';
+
+const LazyFallback = () => (
+  <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50">
+    <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+  </div>
+);
 
 const App: React.FC = () => {
   // --- State ---
@@ -654,18 +662,21 @@ const App: React.FC = () => {
 
         {/* Phase 3: Matching / Selection */}
         {phase === AppPhase.MATCHING && (
+          <Suspense fallback={<LazyFallback />}>
           <div className="w-full h-full">
-            <PlanComparison 
-              plans={generatedPlans} 
+            <PlanComparison
+              plans={generatedPlans}
               onSelect={handleSelectPlan}
               onRegenerate={handleGeneratePlans}
               onEditConstraints={() => setPhase(AppPhase.INTAKE)}
             />
           </div>
+          </Suspense>
         )}
 
         {/* Phase 4: Execution (Refinement) */}
         {phase === AppPhase.EXECUTION && selectedPlan && (
+          <Suspense fallback={<LazyFallback />}>
            <div className="w-full h-full">
              <ExecutionView
                plan={selectedPlan as ScoredPlan}
@@ -680,10 +691,12 @@ const App: React.FC = () => {
                dateInfo={userProfile.date_info}
              />
            </div>
+          </Suspense>
         )}
 
         {/* Phase 5: Final Execution (Immutable) */}
         {phase === AppPhase.FINAL_EXECUTION && selectedPlan && (
+          <Suspense fallback={<LazyFallback />}>
             <div className="w-full h-full">
                 <FinalItineraryView
                     plan={selectedPlan as ScoredPlan}
@@ -693,25 +706,34 @@ const App: React.FC = () => {
                     dateInfo={userProfile.date_info}
                 />
             </div>
+          </Suspense>
         )}
 
       </main>
     </div>
-    <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
-    {user && (
-      <CloudLoadModal
-        isOpen={isCloudLoadOpen}
-        onClose={() => setIsCloudLoadOpen(false)}
-        userId={user.id}
-        onLoad={handleCloudLoad}
-      />
-    )}
-    <SettingsModal
-      isOpen={isSettingsOpen}
-      onClose={() => setIsSettingsOpen(false)}
-      onKeyChange={setHasKey}
-      onLogin={() => { setIsSettingsOpen(false); setIsLoginOpen(true); }}
-    />
+    <Suspense fallback={null}>
+      {isLoginOpen && <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />}
+    </Suspense>
+    <Suspense fallback={null}>
+      {user && isCloudLoadOpen && (
+        <CloudLoadModal
+          isOpen={isCloudLoadOpen}
+          onClose={() => setIsCloudLoadOpen(false)}
+          userId={user.id}
+          onLoad={handleCloudLoad}
+        />
+      )}
+    </Suspense>
+    <Suspense fallback={null}>
+      {isSettingsOpen && (
+        <SettingsModal
+          isOpen={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+          onKeyChange={setHasKey}
+          onLogin={() => { setIsSettingsOpen(false); setIsLoginOpen(true); }}
+        />
+      )}
+    </Suspense>
     </ErrorBoundary>
   );
 };
