@@ -5,7 +5,7 @@
 **Name:** Event Pragmetizer OSS
 **Type:** AI-powered event planning application (open-source)
 **Origin:** Forked from Event Pragmetizer M3.0 (`v3.0-legacy`)
-**Stack:** React 19 + TypeScript + Vite + Tailwind (CDN) + Google Gemini API (`@google/genai` v1.40.0) + Supabase (optional cloud sync)
+**Stack:** React 19 + TypeScript + Vite + Tailwind CSS v3 (compiled) + Google Gemini API (`@google/genai` v1.40.0) + Supabase (optional cloud sync)
 
 ---
 
@@ -179,4 +179,4 @@ Sibling projects:
 
 ---
 
-*Created: 2026-02-10 | Updated: 2026-02-11 (v3.0.0)*
+*Created: 2026-02-10 | Updated: 2026-02-11 (v3.1.0)*

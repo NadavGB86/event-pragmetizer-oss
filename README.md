@@ -9,24 +9,28 @@ AI-powered event planning that transforms natural language descriptions into fea
 
 Describe what you need — "a birthday party for 30 people, budget around $2000, somewhere outdoors" — and the app will:
 
-1. **Profile your needs** through a conversational chat interface
+1. **Choose your guidance mode** (Quick, Guided, or Deep) and **profile your needs** through a conversational chat
 2. **Generate 2-3 candidate plans** with different tradeoff strategies
 3. **Verify feasibility** using Google Search grounding (real venues, real prices)
 4. **Deliver an actionable itinerary** with booking links, maps, and cost breakdowns
 
 ## Features
 
-- Conversational needs analysis with real-time profile extraction
+- **Guidance modes** — choose Quick, Guided, or Deep interview depth before starting
+- **Usage modes** — Free (Flash, $0) or Full (Pro for plans, pay-per-use) with in-app toggle
+- Conversational needs analysis with real-time profile extraction and readiness signaling
 - Multi-plan comparison with feasibility scoring
 - Two-stage plan validation (advisory + strict pass/fail)
 - Google Search grounding for venue and price verification
 - Date-aware planning (exact dates, date ranges, or open-ended)
 - Multi-currency support (USD, ILS, EUR, GBP)
 - Smart undo/redo for all state changes
+- Settings panel (API key management, usage mode, cloud sync status)
 - Cloud persistence via Supabase (optional)
 - Magic link authentication (optional)
 - Exportable plans (JSON backup + styled HTML)
 - Actionable links (Google Maps, Booking.com, Search)
+- BYOK (Bring Your Own Key) — your API key never leaves your browser
 
 ## Quick Start
 
@@ -80,9 +84,9 @@ The app works fully with browser-only storage (localStorage + JSON export/import
 ## Project Structure
 
 ```
-├── App.tsx                    # Main entry, state management, phase routing
+├── App.tsx                    # Main entry, state management, phase routing, guidance mode selector
 ├── types.ts                   # Centralized TypeScript interfaces
-├── constants.ts               # Model names, system prompts, initial profile
+├── constants.ts               # Model names, system prompts, buildAnalystInstruction(mode)
 ├── components/                # React components (one per file)
 │   ├── ChatInterface.tsx      # Conversational intake
 │   ├── PlanComparison.tsx     # Side-by-side plan selection
