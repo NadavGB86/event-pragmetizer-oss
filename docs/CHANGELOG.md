@@ -1,5 +1,38 @@
 # Changelog — Event Pragmetizer OSS
 
+## 3.0.0 (2026-02-11)
+
+Architecture convergence release. Unifies the app so it behaves identically across local dev, Vercel, and self-hosted deployments. Introduces user-configurable usage modes.
+
+### Unified Architecture
+- **One system everywhere** — local dev, Vercel deployed, and self-hosted all use the same code and behavior
+- **Proxy removed** — deleted Vercel serverless function (`api/gemini.ts`) and all proxy code from `proxyClient.ts`
+- **Key chain simplified** — BYOK key > build-time key (.env.local) > error. No proxy fallback.
+- **Cloud sync is optional** — Supabase features only appear when env vars are configured. Browser-only by default.
+
+### Usage Mode Toggle
+- **Free mode** (default) — Flash model for all steps. No billing account needed. Rate-limited (~250 req/day).
+- **Full mode** — Pro model for plan generation and judges, Flash for chat. Requires billing-enabled key.
+- **Dynamic model selection** — `getModelForPhase('chat'|'generate'|'judge')` replaces hardcoded model references
+- **Privacy-aware** — setup screen explains that free-tier prompts may be used by Google for training
+
+### Settings Panel
+- **New Settings modal** — accessible via gear icon in header (desktop and mobile)
+- **API key management** — view (masked), replace, or remove your key without resetting the app
+- **Usage mode toggle** — switch between Free and Full at any time
+- **Cloud Sync status** — shows connection status if Supabase is configured, docs link if not
+
+### Setup Screen Redesign
+- **Corrected pricing info** — honest explanation of free vs paid tier boundaries
+- **Usage mode selection** on first setup — users choose Free or Full before starting
+- **Privacy notices** — dynamic based on selected mode
+
+### Testing
+- **83 tests passing** (was 79) — 4 new tests for usage mode system
+- Removed proxy-specific tests (dead code)
+
+---
+
 ## 2.1.0 (2026-02-10)
 
 BYOK (Bring Your Own Key) release. Users provide their own Gemini API key — no server-side key needed.

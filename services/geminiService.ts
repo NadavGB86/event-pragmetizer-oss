@@ -1,7 +1,7 @@
-import { callGemini } from './proxyClient';
+import { callGemini, getModelForPhase } from './proxyClient';
 import { GenerateContentResponse } from "@google/genai";
 import { UserProfile, CandidatePlan, ChatMessage } from "../types";
-import { SYSTEM_INSTRUCTION_ANALYST, SYSTEM_INSTRUCTION_GENERATOR, MODEL_NAME, PRO_MODEL_NAME } from "../constants";
+import { SYSTEM_INSTRUCTION_ANALYST, SYSTEM_INSTRUCTION_GENERATOR } from "../constants";
 import { getCurrencySymbol } from "../utils/currency";
 
 
@@ -34,8 +34,8 @@ export const sendMessageToAnalyst = async (
 ): Promise<{ text: string; profileUpdate: Partial<UserProfile> | null }> => {
   
   try {
-    const model = MODEL_NAME;
-    
+    const model = getModelForPhase('chat');
+
     // Construct context-aware prompt
     const chatHistoryText = history.map(h => `${h.role.toUpperCase()}: ${h.content}`).join('\n');
     const profileContext = JSON.stringify(currentProfile);
@@ -73,7 +73,7 @@ import { ScoredPlan } from "../types";
 
 export const generateCandidatePlans = async (profile: UserProfile): Promise<ScoredPlan[]> => {
   try {
-    const model = PRO_MODEL_NAME;
+    const model = getModelForPhase('generate');
 
     // 1. Build strict request
     const synthesisRequest = buildSynthesisRequest(profile);
@@ -142,7 +142,7 @@ A single valid JSON object representing the *entire* modified plan.
 
 export const refinePlan = async (currentPlan: ScoredPlan, instruction: string, profile: UserProfile): Promise<ScoredPlan> => {
   try {
-     const model = PRO_MODEL_NAME;
+     const model = getModelForPhase('generate');
 
      // Build request to maintain context
      const request = buildSynthesisRequest(profile);

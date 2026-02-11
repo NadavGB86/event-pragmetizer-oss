@@ -3,7 +3,7 @@ import { AppPhase, ChatMessage, UserProfile, CandidatePlan, ScoredPlan, AppState
 import { INITIAL_USER_PROFILE } from './constants';
 import * as GeminiService from './services/geminiService';
 import { softEvaluatePlan, evaluatePlan } from './services/judgeService';
-import { hasGeminiAccess, setUserApiKey } from './services/proxyClient';
+import { hasGeminiAccess, setUserApiKey, getUserUsageMode, setUserUsageMode, type UsageMode } from './services/proxyClient';
 import { assessReadiness } from './utils/readiness';
 import { mergeProfile } from './utils/profileMerge';
 import { useUndoRedo } from './hooks/useUndoRedo';
@@ -20,6 +20,7 @@ import LoginModal from './components/auth/LoginModal';
 import CloudLoadModal from './components/persistence/CloudLoadModal';
 import { exportState, validateAndParseState } from './utils/persistence';
 import ErrorBoundary from './components/ErrorBoundary';
+import SettingsModal from './components/SettingsModal';
 import { Sparkles, KeyRound, ExternalLink, BrainCircuit, X } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -77,11 +78,13 @@ const App: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false); // Transient UI state, no undo
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isCloudLoadOpen, setIsCloudLoadOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [showDatePivot, setShowDatePivot] = useState(false); // Transient, not undoable
   const [isSoftJudging, setIsSoftJudging] = useState(false); // Transient, not undoable
   const [sidebarOpen, setSidebarOpen] = useState(false); // Mobile sidebar drawer
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [hasKey, setHasKey] = useState(() => hasGeminiAccess());
+  const [usageMode, setUsageMode] = useState<UsageMode>(() => getUserUsageMode());
   const { user } = useAuth();
 
   // Destructure for easier usage below (read-only)
@@ -182,7 +185,13 @@ const App: React.FC = () => {
     const key = apiKeyInput.trim();
     if (!key) return;
     setUserApiKey(key);
+    setUserUsageMode(usageMode);
     setHasKey(true);
+  };
+
+  const handleUsageModeChange = (mode: UsageMode) => {
+    setUsageMode(mode);
+    setUserUsageMode(mode);
   };
 
   // Derived State
@@ -308,7 +317,7 @@ const App: React.FC = () => {
   if (!hasKey) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 p-6">
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 max-w-md w-full">
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 max-w-lg w-full">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2.5 bg-amber-100 rounded-xl">
               <KeyRound className="text-amber-600" size={24} />
@@ -318,47 +327,105 @@ const App: React.FC = () => {
               <p className="text-sm text-slate-500">API key required to get started</p>
             </div>
           </div>
-          <div className="space-y-4 text-sm text-slate-600">
-            <p>This app uses the Google Gemini API. You need your own API key:</p>
-            <ol className="list-decimal list-inside space-y-2 pl-1">
-              <li>
-                <a
-                  href="https://aistudio.google.com/apikey"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-indigo-600 hover:text-indigo-800 underline inline-flex items-center gap-1"
+
+          <div className="space-y-5 text-sm text-slate-600">
+            {/* Step 1: API Key */}
+            <div>
+              <p className="mb-2">This app uses the Google Gemini API. You need your own API key:</p>
+              <ol className="list-decimal list-inside space-y-2 pl-1">
+                <li>
+                  <a
+                    href="https://aistudio.google.com/apikey"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-indigo-600 hover:text-indigo-800 underline inline-flex items-center gap-1"
+                  >
+                    Get a Gemini API key <ExternalLink size={12} />
+                  </a>
+                </li>
+                <li>Paste it below:</li>
+              </ol>
+              <div className="flex gap-2 mt-3">
+                <input
+                  type="password"
+                  value={apiKeyInput}
+                  onChange={(e) => setApiKeyInput(e.target.value)}
+                  placeholder="AIzaSy..."
+                  className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono"
+                  onKeyDown={(e) => e.key === 'Enter' && handleSaveApiKey()}
+                />
+                <button
+                  onClick={handleSaveApiKey}
+                  disabled={!apiKeyInput.trim()}
+                  className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  Get a Gemini API key <ExternalLink size={12} />
-                </a>
-              </li>
-              <li>Paste it below:</li>
-            </ol>
-            <p className="text-xs text-slate-500 bg-slate-50 rounded-lg px-3 py-2 border border-slate-200">
-              Chatting is free (Flash model). Plan generation and evaluation use the Pro model, which has a small per-use cost. See <a href="https://ai.google.dev/gemini-api/docs/pricing" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline">Google's pricing</a>.
-            </p>
-            <div className="flex gap-2">
-              <input
-                type="password"
-                value={apiKeyInput}
-                onChange={(e) => setApiKeyInput(e.target.value)}
-                placeholder="AIzaSy..."
-                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono"
-                onKeyDown={(e) => e.key === 'Enter' && handleSaveApiKey()}
-              />
-              <button
-                onClick={handleSaveApiKey}
-                disabled={!apiKeyInput.trim()}
-                className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                Save
-              </button>
+                  Save
+                </button>
+              </div>
+              <p className="text-xs text-slate-400 mt-2">Your key is stored locally in your browser. It is never sent to our servers.</p>
             </div>
-            <p className="text-xs text-slate-400">Your key is stored locally in your browser. It is never sent to our servers.</p>
-          </div>
-          <div className="mt-6 p-3 bg-slate-50 rounded-lg border border-slate-200">
-            <p className="text-xs text-slate-500">
-              <strong>Developers:</strong> You can also set <code className="bg-slate-100 px-1 py-0.5 rounded font-mono">GEMINI_API_KEY</code> in <code className="bg-slate-100 px-1 py-0.5 rounded font-mono">.env.local</code> instead.
-            </p>
+
+            {/* Step 2: Usage Mode */}
+            <div className="border-t border-slate-200 pt-4">
+              <p className="font-medium text-slate-700 mb-3">Choose your usage mode:</p>
+              <div className="space-y-2">
+                <label
+                  className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${usageMode === 'free' ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'}`}
+                >
+                  <input
+                    type="radio"
+                    name="usageMode"
+                    checked={usageMode === 'free'}
+                    onChange={() => handleUsageModeChange('free')}
+                    className="mt-0.5 accent-indigo-600"
+                  />
+                  <div>
+                    <span className="font-medium text-slate-800">Free</span>
+                    <span className="ml-2 text-xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">$0</span>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Uses Flash model for all steps. No billing account needed. Rate-limited (~250 requests/day).
+                    </p>
+                  </div>
+                </label>
+                <label
+                  className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${usageMode === 'full' ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'}`}
+                >
+                  <input
+                    type="radio"
+                    name="usageMode"
+                    checked={usageMode === 'full'}
+                    onChange={() => handleUsageModeChange('full')}
+                    className="mt-0.5 accent-indigo-600"
+                  />
+                  <div>
+                    <span className="font-medium text-slate-800">Full</span>
+                    <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">pay-per-use</span>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Uses Pro model for plan generation and evaluation (higher quality). Requires a <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline">billing-enabled key</a>.
+                    </p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* Pricing & Privacy Info */}
+            <div className="bg-slate-50 rounded-lg px-3 py-2.5 border border-slate-200 text-xs text-slate-500 space-y-1.5">
+              <p>
+                <strong>Pricing:</strong> Without billing, Flash is genuinely free (rate-limited). With billing enabled, Flash costs ~$0.50/M input tokens and Pro costs ~$2/M input tokens. See <a href="https://ai.google.dev/gemini-api/docs/pricing" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline">Google's pricing</a>.
+              </p>
+              <p>
+                <strong>Privacy:</strong> {usageMode === 'free'
+                  ? 'On the free tier, Google may use your prompts to improve their AI models.'
+                  : 'With a billing-enabled key, Google does not use your data for model training.'}
+              </p>
+            </div>
+
+            {/* Developer note */}
+            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+              <p className="text-xs text-slate-500">
+                <strong>Developers:</strong> You can also set <code className="bg-slate-100 px-1 py-0.5 rounded font-mono">GEMINI_API_KEY</code> in <code className="bg-slate-100 px-1 py-0.5 rounded font-mono">.env.local</code> instead.
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -382,6 +449,7 @@ const App: React.FC = () => {
         onCloudSave={handleCloudSave}
         onCloudLoad={() => setIsCloudLoadOpen(true)}
         onLogin={() => setIsLoginOpen(true)}
+        onSettings={() => setIsSettingsOpen(true)}
       />
       <input
         type="file"
@@ -548,6 +616,12 @@ const App: React.FC = () => {
         onLoad={handleCloudLoad}
       />
     )}
+    <SettingsModal
+      isOpen={isSettingsOpen}
+      onClose={() => setIsSettingsOpen(false)}
+      onKeyChange={setHasKey}
+      onLogin={() => { setIsSettingsOpen(false); setIsLoginOpen(true); }}
+    />
     </ErrorBoundary>
   );
 };

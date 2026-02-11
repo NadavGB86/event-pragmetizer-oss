@@ -20,7 +20,7 @@ describe('proxyClient', () => {
     mockGenerateContent.mockReset();
   });
 
-  // --- SDK mode (default, no VITE_USE_PROXY) ---
+  // --- SDK mode (default) ---
   describe('SDK mode (default)', () => {
     it('calls GoogleGenAI generateContent with correct params', async () => {
       mockGenerateContent.mockResolvedValue({
@@ -168,14 +168,6 @@ describe('proxyClient', () => {
     });
   });
 
-  // --- useProxy flag ---
-  describe('useProxy flag', () => {
-    it('is false by default (no VITE_USE_PROXY set)', async () => {
-      const { useProxy } = await import('./proxyClient');
-      expect(useProxy).toBe(false);
-    });
-  });
-
   // --- BYOK (Bring Your Own Key) ---
   describe('BYOK helpers', () => {
     let store: Record<string, string>;
@@ -220,8 +212,48 @@ describe('proxyClient', () => {
     });
   });
 
-  // Note: Proxy mode (fetch-based) tests require VITE_USE_PROXY=true at module load time.
-  // Since this is a compile-time env var, proxy mode is best tested via integration/E2E
-  // tests against a running Vercel deployment. The SDK pass-through tests above verify
-  // the most important behavior — that callGemini correctly delegates to the SDK.
+  // --- Usage mode ---
+  describe('usage mode', () => {
+    let store: Record<string, string>;
+
+    beforeEach(() => {
+      store = {};
+      vi.stubGlobal('localStorage', {
+        getItem: (key: string) => store[key] ?? null,
+        setItem: (key: string, val: string) => { store[key] = val; },
+        removeItem: (key: string) => { delete store[key]; },
+      });
+    });
+
+    it('defaults to free mode when not set', async () => {
+      const { getUserUsageMode } = await import('./proxyClient');
+      expect(getUserUsageMode()).toBe('free');
+    });
+
+    it('setUserUsageMode stores and getUserUsageMode retrieves the mode', async () => {
+      const { getUserUsageMode, setUserUsageMode } = await import('./proxyClient');
+      setUserUsageMode('full');
+      expect(getUserUsageMode()).toBe('full');
+    });
+
+    it('invalid value defaults to free', async () => {
+      store['ep_usage_mode'] = 'invalid';
+      const { getUserUsageMode } = await import('./proxyClient');
+      expect(getUserUsageMode()).toBe('free');
+    });
+
+    it('getModelForPhase returns Flash for everything in free mode', async () => {
+      const { getModelForPhase } = await import('./proxyClient');
+      expect(getModelForPhase('chat', 'free')).toBe('gemini-3-flash-preview');
+      expect(getModelForPhase('generate', 'free')).toBe('gemini-3-flash-preview');
+      expect(getModelForPhase('judge', 'free')).toBe('gemini-3-flash-preview');
+    });
+
+    it('getModelForPhase returns Flash for chat and Pro for generate/judge in full mode', async () => {
+      const { getModelForPhase } = await import('./proxyClient');
+      expect(getModelForPhase('chat', 'full')).toBe('gemini-3-flash-preview');
+      expect(getModelForPhase('generate', 'full')).toBe('gemini-3-pro-preview');
+      expect(getModelForPhase('judge', 'full')).toBe('gemini-3-pro-preview');
+    });
+  });
 });

@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   CalendarCheck, Trash2, Download, Upload,
   Undo2, Redo2, Cloud, CloudDownload, LogIn, LogOut,
-  Menu, X,
+  Menu, X, Settings,
 } from 'lucide-react';
 
 interface AuthAwareHeaderProps {
@@ -19,6 +19,7 @@ interface AuthAwareHeaderProps {
   onCloudSave: () => void;
   onCloudLoad: () => void;
   onLogin: () => void;
+  onSettings: () => void;
 }
 
 const AuthAwareHeader: React.FC<AuthAwareHeaderProps> = ({
@@ -33,6 +34,7 @@ const AuthAwareHeader: React.FC<AuthAwareHeaderProps> = ({
   onCloudSave,
   onCloudLoad,
   onLogin,
+  onSettings,
 }) => {
   const { user, signOut, cloudAvailable } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -159,6 +161,15 @@ const AuthAwareHeader: React.FC<AuthAwareHeaderProps> = ({
             )}
           </div>
         )}
+
+        {/* Settings */}
+        <button
+          onClick={onSettings}
+          className="p-2 text-slate-400 hover:text-indigo-600 transition-colors border-l pl-4 border-slate-200"
+          title="Settings"
+        >
+          <Settings size={18} />
+        </button>
       </div>
 
       {/* Mobile: undo/redo + hamburger */}
@@ -212,6 +223,10 @@ const AuthAwareHeader: React.FC<AuthAwareHeaderProps> = ({
               </button>
               <button onClick={() => menuAction(onImportClick)} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 active:bg-slate-100">
                 <Download size={16} className="text-slate-400" /> Import Backup
+              </button>
+
+              <button onClick={() => menuAction(onSettings)} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 active:bg-slate-100">
+                <Settings size={16} className="text-slate-400" /> Settings
               </button>
 
               <div className="border-t border-slate-100 my-1" />

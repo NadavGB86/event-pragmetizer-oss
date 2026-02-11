@@ -5,7 +5,7 @@
 **Name:** Event Pragmetizer OSS
 **Type:** AI-powered event planning application (open-source)
 **Origin:** Forked from Event Pragmetizer M3.0 (`v3.0-legacy`)
-**Stack:** React 19 + TypeScript + Vite + Tailwind (CDN) + Google Gemini API (`@google/genai` v1.40.0) + Supabase (auth + cloud persistence)
+**Stack:** React 19 + TypeScript + Vite + Tailwind (CDN) + Google Gemini API (`@google/genai` v1.40.0) + Supabase (optional cloud sync)
 
 ---
 
@@ -42,12 +42,13 @@ Transforms unstructured natural language descriptions of event needs into feasib
 | `App.tsx` | Main entry, state management (via `useUndoRedo`), phase routing |
 | `types.ts` | **Centralized types.** All interfaces live here. |
 | `constants.ts` | `MODEL_NAME`, `INITIAL_USER_PROFILE`, system instructions |
-| `services/proxyClient.ts` | **Unified Gemini caller** — BYOK, SDK, and proxy modes + key helpers |
+| `services/proxyClient.ts` | **Unified Gemini caller** — BYOK + SDK mode, usage mode helpers, key helpers |
 | `services/geminiService.ts` | Analyst, Generator, Refiner LLM calls (via `callGemini`) |
 | `services/judgeService.ts` | Hard + soft plan evaluation (via `callGemini` + Google Search grounding) |
-| `services/supabaseClient.ts` | Supabase client singleton |
-| `services/authService.ts` | Magic link auth (OTP send/verify/logout) |
-| `services/storageService.ts` | Cloud CRUD (save/get/load/delete plans) |
+| `services/supabaseClient.ts` | Supabase client singleton (optional cloud sync) |
+| `services/authService.ts` | Magic link auth — OTP send/verify/logout (optional cloud sync) |
+| `services/storageService.ts` | Cloud CRUD — save/get/load/delete plans (optional cloud sync) |
+| `components/SettingsModal.tsx` | Settings panel — API key, usage mode, cloud sync status |
 | `context/AuthContext.tsx` | Auth state provider + `useAuth()` hook |
 | `components/` | One component per file |
 | `hooks/useUndoRedo.ts` | State history manager (unlimited undo/redo) |
@@ -59,16 +60,18 @@ Transforms unstructured natural language descriptions of event needs into feasib
 
 ---
 
-## SDK & API Key Rules (CRITICAL)
+## SDK, API Key & Usage Mode Rules (CRITICAL)
 
 1. **SDK:** `@google/genai` (v1.40.0). **NEVER** swap to `@google/generative-ai` (different, incompatible package).
 2. **API pattern:** `new GoogleGenAI({ apiKey })`, `ai.models.generateContent({model, contents, config})`
-3. **Models:** `MODEL_NAME` (flash, free tier) and `PRO_MODEL_NAME` (pro, paid) in `constants.ts`. Change there only.
+3. **Models:** `MODEL_NAME` (flash) and `PRO_MODEL_NAME` (pro) in `constants.ts`. Change there only.
 4. **All Gemini calls** go through `callGemini()` in `services/proxyClient.ts`.
-5. **BYOK (Bring Your Own Key):** Users paste their Gemini API key in the setup screen. Stored in `localStorage('ep_gemini_api_key')`. Key never leaves the browser.
-6. **API key priority:** BYOK key (localStorage) > build-time key (.env.local) > Vercel proxy > error.
-7. **BYOK helpers:** `getUserApiKey()`, `setUserApiKey()`, `hasGeminiAccess()` in `proxyClient.ts`.
-8. **Do NOT modify `vite.config.ts` define block** unless absolutely necessary. The `loadEnv` with empty prefix reads ALL env vars — must gate with `VITE_USE_PROXY` to prevent key leak.
+5. **Model selection** is dynamic: `getModelForPhase(phase, mode?)` in `proxyClient.ts`. Services call this instead of using `MODEL_NAME`/`PRO_MODEL_NAME` directly.
+6. **BYOK (Bring Your Own Key):** Users paste their Gemini API key in the setup screen. Stored in `localStorage('ep_gemini_api_key')`. Key never leaves the browser.
+7. **API key priority:** BYOK key (localStorage) > build-time key (.env.local) > error.
+8. **Usage mode:** `localStorage('ep_usage_mode')` — `'free'` (Flash for everything) or `'full'` (Flash for chat, Pro for plans/judges). Helpers: `getUserUsageMode()`, `setUserUsageMode()`.
+9. **BYOK helpers:** `getUserApiKey()`, `setUserApiKey()`, `hasGeminiAccess()` in `proxyClient.ts`.
+10. **No proxy:** The Vercel serverless proxy was removed in v3.0.0. All Gemini calls go direct from browser via SDK.
 
 ---
 
@@ -83,31 +86,33 @@ npm run preview      # Preview dist/
 
 ### Environment Variables (`.env.local`)
 ```env
-GEMINI_API_KEY=your_key_here
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+GEMINI_API_KEY=your_key_here              # Dev convenience (optional — BYOK works without it)
+VITE_SUPABASE_URL=your_supabase_url       # Optional: enables cloud sync
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key  # Optional: enables cloud sync
 ```
 
-### For Deployed Users (Vercel)
-No server-side API key needed. Users enter their own Gemini API key via the in-app setup screen (BYOK).
+### For Deployed Users (Vercel / Self-Hosted)
+No server-side API key or env vars needed. Users enter their own Gemini API key via the in-app setup screen (BYOK). Cloud sync is optional — only available if Supabase env vars are configured.
 
 ---
 
 ## Development Priorities (OSS Roadmap)
 
-**Completed (v2.1.0):**
+**Completed (v3.0.0):**
 1. Installation & Onboarding (README, `.env.example`, one-command setup)
 2. Mobile Responsiveness (PWA manifest, responsive layout, touch-friendly)
-3. API Key Security (BYOK + Vercel proxy infrastructure)
+3. API Key Security (BYOK — key never leaves browser)
 4. Tailwind Compilation (CDN → compiled PostCSS pipeline)
-5. Testing (79 tests — 66 utils + 13 proxyClient)
+5. Testing (83 tests — 66 utils + 17 proxyClient)
 6. CI/CD (GitHub Actions — build, lint, test)
 7. Community (LICENSE, CONTRIBUTING.md, issue/PR templates)
+8. **Unified Architecture** — same code, same behavior across local dev/Vercel/self-hosted
+9. **Usage Mode Toggle** — Free (Flash-only, $0) vs Full (Pro for plans, pay-per-use)
+10. **Settings Panel** — API key management, usage mode, cloud sync status
+11. **Proxy removal** — direct SDK calls only, no serverless function
 
 **Pending:**
-- Free-tier model toggle (Flash-only mode for zero-cost usage)
 - PWA icons (192px and 512px)
-- Supabase on Vercel (env vars, dedicated vs shared instance, redirect URLs)
 - Code splitting (bundle >500KB)
 
 ---
@@ -145,7 +150,8 @@ No server-side API key needed. Users enter their own Gemini API key via the in-a
 4. Test build after EVERY change.
 5. One feature per commit. Conventional commits (`type(scope): description`).
 6. Do NOT change the SDK or API key chain.
-7. Model names live in `constants.ts`.
+7. Model names live in `constants.ts`. Model selection goes through `getModelForPhase()` in `proxyClient.ts`.
+8. Storage: localStorage is primary. Supabase is optional (gated by `supabaseConfigured` flag).
 
 ### Agent Teams
 Agent teams are enabled. For complex parallel work (e.g., frontend + backend + tests simultaneously,
@@ -169,4 +175,4 @@ Sibling projects:
 
 ---
 
-*Created: 2026-02-10*
+*Created: 2026-02-10 | Updated: 2026-02-11 (v3.0.0)*

@@ -1,7 +1,6 @@
-import { callGemini } from './proxyClient';
+import { callGemini, getModelForPhase } from './proxyClient';
 import { GenerateContentResponse } from "@google/genai";
 import { ScoredPlan, UserProfile, JudgeVerdict, SoftJudgeVerdict } from "../types";
-import { PRO_MODEL_NAME } from "../constants";
 
 
 const SYSTEM_INSTRUCTION_JUDGE = `
@@ -122,7 +121,7 @@ function safeParseJson<T>(text: string): T {
 
 export const evaluatePlan = async (plan: ScoredPlan, profile: UserProfile): Promise<JudgeVerdict> => {
    try {
-     const model = PRO_MODEL_NAME;
+     const model = getModelForPhase('judge');
 
      const prompt = `
      EVALUATE THIS PLAN:
@@ -190,7 +189,7 @@ export const evaluatePlan = async (plan: ScoredPlan, profile: UserProfile): Prom
  */
 export const softEvaluatePlan = async (plan: ScoredPlan, profile: UserProfile): Promise<SoftJudgeVerdict> => {
   try {
-    const model = PRO_MODEL_NAME;
+    const model = getModelForPhase('judge');
 
     const prompt = `
     REVIEW THIS PLAN (ADVISORY):
