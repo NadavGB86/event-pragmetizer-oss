@@ -144,42 +144,40 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onKeyCha
           </div>
           <div className="space-y-2">
             <label
-              className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${usageMode === 'free' ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'}`}
+              className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${usageMode === 'lite' ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'}`}
             >
-              <input
-                type="radio"
-                name="settingsUsageMode"
-                checked={usageMode === 'free'}
-                onChange={() => handleModeChange('free')}
-                className="mt-0.5 accent-indigo-600"
-              />
+              <input type="radio" name="settingsUsageMode" checked={usageMode === 'lite'} onChange={() => handleModeChange('lite')} className="mt-0.5 accent-indigo-600" />
               <div>
-                <span className="text-sm font-medium text-slate-800">Free</span>
+                <span className="text-sm font-medium text-slate-800">Lite</span>
                 <span className="ml-2 text-xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">$0</span>
-                <p className="text-xs text-slate-500 mt-0.5">Flash model for all steps. Rate-limited (~250 req/day).</p>
+                <p className="text-xs text-slate-500 mt-0.5">Best for free API keys — generous rate limits (~1,000 req/day).</p>
               </div>
             </label>
             <label
-              className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${usageMode === 'full' ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'}`}
+              className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${usageMode === 'standard' ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'}`}
             >
-              <input
-                type="radio"
-                name="settingsUsageMode"
-                checked={usageMode === 'full'}
-                onChange={() => handleModeChange('full')}
-                className="mt-0.5 accent-indigo-600"
-              />
+              <input type="radio" name="settingsUsageMode" checked={usageMode === 'standard'} onChange={() => handleModeChange('standard')} className="mt-0.5 accent-indigo-600" />
               <div>
-                <span className="text-sm font-medium text-slate-800">Full</span>
+                <span className="text-sm font-medium text-slate-800">Standard</span>
+                <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">$0</span>
+                <p className="text-xs text-slate-500 mt-0.5">Better quality, tighter limits (~250 req/day).</p>
+              </div>
+            </label>
+            <label
+              className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${usageMode === 'pro' ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'}`}
+            >
+              <input type="radio" name="settingsUsageMode" checked={usageMode === 'pro'} onChange={() => handleModeChange('pro')} className="mt-0.5 accent-indigo-600" />
+              <div>
+                <span className="text-sm font-medium text-slate-800">Pro</span>
                 <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">pay-per-use</span>
-                <p className="text-xs text-slate-500 mt-0.5">Pro model for plans and evaluation. Requires billing-enabled key.</p>
+                <p className="text-xs text-slate-500 mt-0.5">Best quality — Pro model for plans. Requires billing-enabled key.</p>
               </div>
             </label>
           </div>
           <p className="text-xs text-slate-400 mt-2">
-            {usageMode === 'free'
-              ? 'Free tier: Google may use your prompts to improve their models.'
-              : 'Billing-enabled: Google does not use your data for model training.'}
+            {usageMode === 'pro'
+              ? 'Paid tier: Google does not use your data for model training.'
+              : 'Free tier: Google may use your prompts to improve their models.'}
           </p>
         </section>
 

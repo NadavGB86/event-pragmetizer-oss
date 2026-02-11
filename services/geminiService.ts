@@ -1,7 +1,7 @@
 import { callGemini, getModelForPhase } from './proxyClient';
 import { GenerateContentResponse } from "@google/genai";
 import { UserProfile, CandidatePlan, ChatMessage, GuidanceMode } from "../types";
-import { buildAnalystInstruction, SYSTEM_INSTRUCTION_GENERATOR } from "../constants";
+import { buildAnalystInstruction, SYSTEM_INSTRUCTION_GENERATOR_OUTLINE, SYSTEM_INSTRUCTION_GENERATOR_DETAIL } from "../constants";
 import { getCurrencySymbol } from "../utils/currency";
 
 
@@ -88,7 +88,7 @@ import { buildSynthesisRequest } from "../utils/requestBuilder";
 import { scoreFeasibility } from "../utils/scoring";
 import { ScoredPlan } from "../types";
 
-export const generateCandidatePlans = async (profile: UserProfile): Promise<ScoredPlan[]> => {
+export const generateCandidatePlans = async (profile: UserProfile, planCount: number = 3): Promise<ScoredPlan[]> => {
   try {
     const model = getModelForPhase('generate');
 
@@ -96,18 +96,18 @@ export const generateCandidatePlans = async (profile: UserProfile): Promise<Scor
     const synthesisRequest = buildSynthesisRequest(profile);
 
     const prompt = `
-    GENERATE PLANS FOR THIS REQUEST:
+    GENERATE ${planCount} PLAN OUTLINES FOR THIS REQUEST:
     ${JSON.stringify(synthesisRequest, null, 2)}
     `;
 
-    // 2. Call LLM
+    // 2. Call LLM with outline prompt for fast generation
     const response: GenerateContentResponse = await callGemini({
       model: model,
       contents: prompt,
       config: {
-        systemInstruction: SYSTEM_INSTRUCTION_GENERATOR,
+        systemInstruction: SYSTEM_INSTRUCTION_GENERATOR_OUTLINE,
         responseMimeType: "application/json",
-        temperature: 0.5, // Lower temperature for adherence
+        temperature: 0.5,
       },
     });
 
@@ -136,6 +136,56 @@ export const generateCandidatePlans = async (profile: UserProfile): Promise<Scor
   } catch (error) {
     console.error("Gemini Planning Error:", error);
     return [];
+  }
+};
+
+/** Expand a plan outline into a fully detailed plan with complete itinerary */
+export const expandPlanDetail = async (
+  outlinePlan: CandidatePlan,
+  userProfile: UserProfile,
+): Promise<CandidatePlan> => {
+  try {
+    const model = getModelForPhase('generate');
+    const synthesisRequest = buildSynthesisRequest(userProfile);
+
+    const prompt = `
+    EXPAND THIS PLAN OUTLINE INTO A FULL DETAILED PLAN:
+
+    OUTLINE:
+    ${JSON.stringify(outlinePlan, null, 2)}
+
+    SYNTHESIS REQUEST (user profile and constraints):
+    ${JSON.stringify(synthesisRequest, null, 2)}
+    `;
+
+    const response: GenerateContentResponse = await callGemini({
+      model: model,
+      contents: prompt,
+      config: {
+        systemInstruction: SYSTEM_INSTRUCTION_GENERATOR_DETAIL,
+        responseMimeType: "application/json",
+        temperature: 0.5,
+      },
+    });
+
+    const jsonStr = response.text || "{}";
+    const expandedPlan: CandidatePlan = JSON.parse(jsonStr);
+
+    // Map currency from LLM response
+    const llmCurrency = (expandedPlan as CandidatePlan & { currency_code?: string }).currency_code;
+    const currencyCode = llmCurrency || outlinePlan.display_currency?.code || synthesisRequest.hard_envelope.currency;
+
+    return {
+      ...expandedPlan,
+      display_currency: {
+        code: currencyCode,
+        symbol: getCurrencySymbol(currencyCode),
+      },
+    };
+  } catch (error) {
+    console.error("Plan expansion error:", error);
+    // Return the outline unchanged if expansion fails
+    return outlinePlan;
   }
 };
 

@@ -84,6 +84,7 @@ const App: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [showDatePivot, setShowDatePivot] = useState(false); // Transient, not undoable
   const [isSoftJudging, setIsSoftJudging] = useState(false); // Transient, not undoable
+  const [isExpanding, setIsExpanding] = useState(false); // Plan outline → detail expansion
   const [sidebarOpen, setSidebarOpen] = useState(false); // Mobile sidebar drawer
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [hasKey, setHasKey] = useState(() => hasGeminiAccess());
@@ -295,7 +296,8 @@ const App: React.FC = () => {
     setIsProcessing(true);
     setPhase(AppPhase.SYNTHESIS);
 
-    const plans = await GeminiService.generateCandidatePlans(userProfile);
+    const planCount = usageMode === 'lite' ? 2 : 3;
+    const plans = await GeminiService.generateCandidatePlans(userProfile, planCount);
     setGeneratedPlans(plans);
     setPhase(AppPhase.MATCHING);
     setIsProcessing(false);
@@ -306,19 +308,27 @@ const App: React.FC = () => {
     // Proceed directly to generation
     setIsProcessing(true);
     setPhase(AppPhase.SYNTHESIS);
-    GeminiService.generateCandidatePlans(userProfile).then(plans => {
+    const planCount = usageMode === 'lite' ? 2 : 3;
+    GeminiService.generateCandidatePlans(userProfile, planCount).then(plans => {
       setGeneratedPlans(plans);
       setPhase(AppPhase.MATCHING);
       setIsProcessing(false);
     });
   };
 
-  const handleSelectPlan = (plan: CandidatePlan) => {
+  const handleSelectPlan = async (plan: CandidatePlan) => {
     setSelectedPlan(plan);
     setJudgeFeedback(null);
     setSoftJudgeFeedback(null);
+    setIsExpanding(true);
     setPhase(AppPhase.EXECUTION);
-    triggerSoftJudge(plan as ScoredPlan);
+
+    // Expand outline into full detail before judging
+    const expanded = await GeminiService.expandPlanDetail(plan, userProfile);
+    const scored: ScoredPlan = { ...expanded, computed_score: (plan as ScoredPlan).computed_score };
+    setSelectedPlan(scored);
+    setIsExpanding(false);
+    triggerSoftJudge(scored);
   };
 
   const handleJudgeRejectionBack = () => {
@@ -463,38 +473,38 @@ const App: React.FC = () => {
                   </div>
                   <div className="space-y-2 ml-8">
                     <label
-                      className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${usageMode === 'free' ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'}`}
+                      className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${usageMode === 'lite' ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'}`}
                     >
-                      <input
-                        type="radio"
-                        name="usageMode"
-                        checked={usageMode === 'free'}
-                        onChange={() => handleUsageModeChange('free')}
-                        className="mt-0.5 accent-indigo-600"
-                      />
+                      <input type="radio" name="usageMode" checked={usageMode === 'lite'} onChange={() => handleUsageModeChange('lite')} className="mt-0.5 accent-indigo-600" />
                       <div>
-                        <span className="font-medium text-slate-800">Free</span>
+                        <span className="font-medium text-slate-800">Lite</span>
                         <span className="ml-2 text-xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">$0</span>
                         <p className="text-xs text-slate-500 mt-1">
-                          Uses Gemini Flash for all steps. No billing needed. Rate-limited (~250 requests/day).
+                          Best for free API keys — generous rate limits (~1,000 req/day).
                         </p>
                       </div>
                     </label>
                     <label
-                      className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${usageMode === 'full' ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'}`}
+                      className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${usageMode === 'standard' ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'}`}
                     >
-                      <input
-                        type="radio"
-                        name="usageMode"
-                        checked={usageMode === 'full'}
-                        onChange={() => handleUsageModeChange('full')}
-                        className="mt-0.5 accent-indigo-600"
-                      />
+                      <input type="radio" name="usageMode" checked={usageMode === 'standard'} onChange={() => handleUsageModeChange('standard')} className="mt-0.5 accent-indigo-600" />
                       <div>
-                        <span className="font-medium text-slate-800">Full</span>
+                        <span className="font-medium text-slate-800">Standard</span>
+                        <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">$0</span>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Better quality, tighter limits (~250 req/day).
+                        </p>
+                      </div>
+                    </label>
+                    <label
+                      className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${usageMode === 'pro' ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'}`}
+                    >
+                      <input type="radio" name="usageMode" checked={usageMode === 'pro'} onChange={() => handleUsageModeChange('pro')} className="mt-0.5 accent-indigo-600" />
+                      <div>
+                        <span className="font-medium text-slate-800">Pro</span>
                         <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">pay-per-use</span>
                         <p className="text-xs text-slate-500 mt-1">
-                          Uses Gemini Pro for plans and evaluation. Requires a{' '}
+                          Best quality — Pro model for plans. Requires a{' '}
                           <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline">billing-enabled key</a>.
                         </p>
                       </div>
@@ -505,13 +515,13 @@ const App: React.FC = () => {
                 {/* Pricing & Privacy */}
                 <div className="bg-slate-50 rounded-lg px-3 py-2.5 border border-slate-200 text-[11px] text-slate-500 space-y-1">
                   <p>
-                    <strong>Pricing:</strong> Without billing, Flash is free (rate-limited). With billing, Flash ~$0.50/M input, Pro ~$2/M input.{' '}
+                    <strong>Pricing:</strong> Lite and Standard are free (rate-limited). Pro uses pay-per-use pricing.{' '}
                     <a href="https://ai.google.dev/gemini-api/docs/pricing" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline">Details</a>
                   </p>
                   <p>
-                    <strong>Privacy:</strong> {usageMode === 'free'
-                      ? 'Free tier: Google may use prompts to improve models.'
-                      : 'Paid tier: Google does not use your data for training.'}
+                    <strong>Privacy:</strong> {usageMode === 'pro'
+                      ? 'Paid tier: Google does not use your data for training.'
+                      : 'Free tier: Google may use prompts to improve models.'}
                   </p>
                 </div>
 
@@ -739,8 +749,8 @@ const App: React.FC = () => {
         {phase === AppPhase.SYNTHESIS && (
              <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 text-center px-6">
                  <div className="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-6"></div>
-                 <h2 className="text-xl font-semibold text-slate-800">Synthesizing Options...</h2>
-                 <p className="text-slate-500 mt-2">The Analyst is reviewing your constraints against possibilities.</p>
+                 <h2 className="text-xl font-semibold text-slate-800">Generating Plan Outlines...</h2>
+                 <p className="text-slate-500 mt-2">Exploring different strategies that fit your constraints.</p>
              </div>
         )}
 
@@ -761,7 +771,14 @@ const App: React.FC = () => {
         {/* Phase 4: Execution (Refinement) */}
         {phase === AppPhase.EXECUTION && selectedPlan && (
           <Suspense fallback={<LazyFallback />}>
-           <div className="w-full h-full">
+           <div className="w-full h-full relative">
+             {isExpanding && (
+               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-50/90 backdrop-blur-sm">
+                 <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
+                 <p className="text-sm font-medium text-slate-700">Expanding plan details...</p>
+                 <p className="text-xs text-slate-500 mt-1">Building your full itinerary</p>
+               </div>
+             )}
              <ExecutionView
                plan={selectedPlan as ScoredPlan}
                onBack={() => setPhase(AppPhase.MATCHING)}

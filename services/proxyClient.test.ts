@@ -225,35 +225,78 @@ describe('proxyClient', () => {
       });
     });
 
-    it('defaults to free mode when not set', async () => {
+    it('defaults to lite mode when not set', async () => {
       const { getUserUsageMode } = await import('./proxyClient');
-      expect(getUserUsageMode()).toBe('free');
+      expect(getUserUsageMode()).toBe('lite');
     });
 
     it('setUserUsageMode stores and getUserUsageMode retrieves the mode', async () => {
       const { getUserUsageMode, setUserUsageMode } = await import('./proxyClient');
-      setUserUsageMode('full');
-      expect(getUserUsageMode()).toBe('full');
+      setUserUsageMode('pro');
+      expect(getUserUsageMode()).toBe('pro');
     });
 
-    it('invalid value defaults to free', async () => {
+    it('invalid value defaults to lite', async () => {
       store['ep_usage_mode'] = 'invalid';
       const { getUserUsageMode } = await import('./proxyClient');
-      expect(getUserUsageMode()).toBe('free');
+      expect(getUserUsageMode()).toBe('lite');
     });
 
-    it('getModelForPhase returns Flash for everything in free mode', async () => {
-      const { getModelForPhase } = await import('./proxyClient');
-      expect(getModelForPhase('chat', 'free')).toBe('gemini-3-flash-preview');
-      expect(getModelForPhase('generate', 'free')).toBe('gemini-3-flash-preview');
-      expect(getModelForPhase('judge', 'free')).toBe('gemini-3-flash-preview');
+    // --- Migration tests ---
+    it('migrates legacy "free" to "standard" and writes back', async () => {
+      store['ep_usage_mode'] = 'free';
+      const { getUserUsageMode } = await import('./proxyClient');
+      expect(getUserUsageMode()).toBe('standard');
+      expect(store['ep_usage_mode']).toBe('standard');
     });
 
-    it('getModelForPhase returns Flash for chat and Pro for generate/judge in full mode', async () => {
+    it('migrates legacy "full" to "pro" and writes back', async () => {
+      store['ep_usage_mode'] = 'full';
+      const { getUserUsageMode } = await import('./proxyClient');
+      expect(getUserUsageMode()).toBe('pro');
+      expect(store['ep_usage_mode']).toBe('pro');
+    });
+
+    it('passes through "lite" unchanged', async () => {
+      store['ep_usage_mode'] = 'lite';
+      const { getUserUsageMode } = await import('./proxyClient');
+      expect(getUserUsageMode()).toBe('lite');
+    });
+
+    it('passes through "standard" unchanged', async () => {
+      store['ep_usage_mode'] = 'standard';
+      const { getUserUsageMode } = await import('./proxyClient');
+      expect(getUserUsageMode()).toBe('standard');
+    });
+
+    it('passes through "pro" unchanged', async () => {
+      store['ep_usage_mode'] = 'pro';
+      const { getUserUsageMode } = await import('./proxyClient');
+      expect(getUserUsageMode()).toBe('pro');
+    });
+
+    // --- Model selection: Lite tier ---
+    it('getModelForPhase returns Flash Lite for everything in lite mode', async () => {
       const { getModelForPhase } = await import('./proxyClient');
-      expect(getModelForPhase('chat', 'full')).toBe('gemini-3-flash-preview');
-      expect(getModelForPhase('generate', 'full')).toBe('gemini-3-pro-preview');
-      expect(getModelForPhase('judge', 'full')).toBe('gemini-3-pro-preview');
+      expect(getModelForPhase('chat', 'lite')).toBe('gemini-2.5-flash-lite');
+      expect(getModelForPhase('generate', 'lite')).toBe('gemini-2.5-flash-lite');
+      expect(getModelForPhase('judge', 'lite')).toBe('gemini-2.5-flash-lite');
+    });
+
+    // --- Model selection: Standard tier ---
+    it('getModelForPhase returns Flash for everything in standard mode', async () => {
+      const { getModelForPhase } = await import('./proxyClient');
+      expect(getModelForPhase('chat', 'standard')).toBe('gemini-3-flash-preview');
+      expect(getModelForPhase('generate', 'standard')).toBe('gemini-3-flash-preview');
+      expect(getModelForPhase('judge', 'standard')).toBe('gemini-3-flash-preview');
+    });
+
+    // --- Model selection: Pro tier ---
+    it('getModelForPhase returns Flash for chat and Pro for generate/judge in pro mode', async () => {
+      const { getModelForPhase } = await import('./proxyClient');
+      expect(getModelForPhase('chat', 'pro')).toBe('gemini-3-flash-preview');
+      expect(getModelForPhase('generate', 'pro')).toBe('gemini-3-pro-preview');
+      expect(getModelForPhase('judge', 'pro')).toBe('gemini-3-pro-preview');
     });
   });
 });

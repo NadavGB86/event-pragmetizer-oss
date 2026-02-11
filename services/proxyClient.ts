@@ -1,10 +1,10 @@
 import { GoogleGenAI, type GenerateContentResponse } from "@google/genai";
-import { MODEL_NAME, PRO_MODEL_NAME } from '../constants';
+import { LITE_MODEL_NAME, MODEL_NAME, PRO_MODEL_NAME } from '../constants';
 
 const KEY_STORAGE = 'ep_gemini_api_key';
 const MODE_STORAGE = 'ep_usage_mode';
 
-export type UsageMode = 'free' | 'full';
+export type UsageMode = 'lite' | 'standard' | 'pro';
 
 // Build-time API key (local dev via .env.local)
 const buildTimeKey = process.env.API_KEY;
@@ -27,12 +27,22 @@ export function hasGeminiAccess(): boolean {
   return !!(getUserApiKey() || buildTimeKey);
 }
 
-/** Get the current usage mode (defaults to 'free') */
+/** Get the current usage mode (defaults to 'lite'). Migrates legacy 'free'/'full' values. */
 export function getUserUsageMode(): UsageMode {
   try {
-    const mode = localStorage.getItem(MODE_STORAGE);
-    return mode === 'full' ? 'full' : 'free';
-  } catch { return 'free'; }
+    const raw = localStorage.getItem(MODE_STORAGE);
+    // Migrate legacy values
+    if (raw === 'free') {
+      localStorage.setItem(MODE_STORAGE, 'standard');
+      return 'standard';
+    }
+    if (raw === 'full') {
+      localStorage.setItem(MODE_STORAGE, 'pro');
+      return 'pro';
+    }
+    if (raw === 'lite' || raw === 'standard' || raw === 'pro') return raw;
+    return 'lite';
+  } catch { return 'lite'; }
 }
 
 /** Set the usage mode */
@@ -42,12 +52,13 @@ export function setUserUsageMode(mode: UsageMode): void {
 
 /**
  * Returns the appropriate model for a given phase and usage mode.
- * Free mode: Flash for everything. Full mode: Flash for chat, Pro for plans + judges.
+ * Lite: Flash Lite for everything. Standard: Flash for everything. Pro: Flash for chat, Pro for plans + judges.
  */
 export function getModelForPhase(phase: 'chat' | 'generate' | 'judge', mode?: UsageMode): string {
   const m = mode ?? getUserUsageMode();
-  if (m === 'free') return MODEL_NAME;
-  // Full mode: Pro for generation and judging, Flash for chat
+  if (m === 'lite') return LITE_MODEL_NAME;
+  if (m === 'standard') return MODEL_NAME;
+  // Pro mode: Pro for generation and judging, Flash for chat
   return phase === 'chat' ? MODEL_NAME : PRO_MODEL_NAME;
 }
 

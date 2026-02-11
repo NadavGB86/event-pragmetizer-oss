@@ -68,8 +68,14 @@ const AuthAwareHeader: React.FC<AuthAwareHeaderProps> = ({
           {phase === AppPhase.INTAKE ? 'Profile' : phase === AppPhase.MATCHING ? 'Match' : phase === AppPhase.EXECUTION ? 'Refine' : 'Final'}
         </span>
         {/* Model indicator badge — hidden on very narrow screens, visible from sm (640px) and on desktop */}
-        <span className={`hidden sm:inline-flex md:inline-flex text-[10px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap shrink-0 ${getUserUsageMode() === 'full' ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'}`}>
-          {getUserUsageMode() === 'full' ? 'Full \u00b7 Pro' : 'Free \u00b7 Flash'}
+        <span className={`hidden sm:inline-flex md:inline-flex text-[10px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap shrink-0 ${
+          getUserUsageMode() === 'pro' ? 'bg-amber-50 text-amber-700' :
+          getUserUsageMode() === 'standard' ? 'bg-blue-50 text-blue-700' :
+          'bg-emerald-50 text-emerald-700'
+        }`}>
+          {getUserUsageMode() === 'pro' ? 'Pro \u00b7 Pro' :
+           getUserUsageMode() === 'standard' ? 'Standard \u00b7 Flash' :
+           'Lite \u00b7 Flash-Lite'}
         </span>
       </div>
 
